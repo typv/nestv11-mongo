@@ -1,0 +1,20 @@
+version: '3'
+services:
+  mongodb:
+    extends:
+      file: ./.docker/compose/mongodb.yml
+      service: mongodb
+    ports:
+      - "27030:27017"
+    volumes:
+      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+      - ${PWD}/.docker/mongodb_data:/data/db
+  redis:
+    extends:
+      file: ./.docker/compose/redis.yml
+      service: redis
+    ports:
+      - "63079:6379"
+
+volumes:
+  mongodb_data:

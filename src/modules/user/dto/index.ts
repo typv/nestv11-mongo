@@ -1,0 +1,224 @@
+import { OmitType } from '@nestjs/swagger';
+import { SuccessResponseDto } from 'src/common/dto/success-response.dto';
+import { Gender, Role, UserType } from 'src/common/enums';
+import {
+  IsLettersAndSpaces,
+  IsNotFutureDate,
+  IsValidPhoneNumber,
+  PropertyDto,
+} from 'src/decorators';
+import { DeleteConstraintReasonType } from '../user.enum';
+
+// ****************************** GetMyInformation ******************************
+export class GetMyInformationResponseDto {
+  @PropertyDto()
+  id: number;
+
+  @PropertyDto()
+  uid: string;
+
+  @PropertyDto()
+  email: string;
+
+  @PropertyDto()
+  firstName: string;
+
+  @PropertyDto()
+  lastName: string;
+
+  @PropertyDto()
+  fullName?: string;
+
+  @PropertyDto()
+  dateOfBirth: Date;
+
+  @PropertyDto()
+  gender: Gender;
+
+  @PropertyDto()
+  phoneNumber: string;
+
+  @PropertyDto()
+  avatar: string;
+
+  @PropertyDto()
+  isActive: boolean;
+
+  @PropertyDto()
+  emailVerified: boolean;
+
+  @PropertyDto()
+  role: Role;
+
+  @PropertyDto()
+  registrationCompleted: boolean;
+
+  @PropertyDto()
+  passwordChangedAt: Date;
+
+  @PropertyDto({
+    type: UserType,
+    required: false,
+    structure: 'enum',
+    example: UserType.Clinic,
+    description: 'User type (Clinic or SelfEmployed)',
+  })
+  userType?: UserType;
+
+  @PropertyDto()
+  practitionerProfileId?: number;
+
+  @PropertyDto()
+  billingInfoId?: number;
+
+  @PropertyDto()
+  clinicId?: number;
+
+  @PropertyDto()
+  canGenerateSystemFeedback?: boolean;
+
+  @PropertyDto({
+    type: Number,
+    required: false,
+    example: 1,
+    description: 'User language ID',
+  })
+  languageId?: number;
+
+  @PropertyDto({
+    type: String,
+    required: false,
+    example: 'English',
+    description: 'User language name',
+  })
+  language?: string;
+}
+
+// ****************************** GetUserInformation ******************************
+export class GetUserInformationResponseDto extends OmitType(GetMyInformationResponseDto, [
+  'passwordChangedAt',
+  'registrationCompleted',
+  'emailVerified',
+  'uid',
+]) {
+  @PropertyDto({
+    type: UserType,
+    required: false,
+    structure: 'enum',
+    example: UserType.Clinic,
+    description: 'User type (Clinic or SelfEmployed)',
+  })
+  userType?: UserType;
+}
+
+export class SetUserTypeBodyDto {
+  @PropertyDto({
+    type: UserType,
+    required: true,
+    structure: 'enum',
+    example: 'self-employed',
+  })
+  type: UserType;
+}
+
+export class SetUserTypeResponseDto {
+  @PropertyDto()
+  success: boolean;
+}
+
+export class PatchUserEmailVerifiedResponseDto {}
+
+// ****************************** GetUserSetupChecklist ******************************
+export class GetUserSetupChecklistResponseDto {
+  @PropertyDto()
+  userId: number;
+
+  @PropertyDto()
+  role: string;
+
+  @PropertyDto()
+  clinicProfile: boolean;
+
+  @PropertyDto()
+  practitionerProfile: boolean;
+
+  @PropertyDto()
+  practitionerHasVerified: boolean;
+
+  @PropertyDto()
+  clinicStatus: string;
+
+  @PropertyDto()
+  practitionerStatus: string;
+
+  @PropertyDto()
+  practitionersAvailability: boolean;
+
+  @PropertyDto()
+  paymentAccount: boolean;
+}
+
+// ****************************** Update User Account ******************************
+export class UpdateUserProfileBodyDto {
+  @PropertyDto({
+    type: String,
+    required: true,
+    validated: true,
+    example: 'Elizabeth',
+  })
+  @IsLettersAndSpaces()
+  firstName: string;
+
+  @PropertyDto({
+    type: String,
+    required: true,
+    validated: true,
+    example: 'Do',
+  })
+  @IsLettersAndSpaces()
+  lastName: string;
+
+  @PropertyDto({
+    type: Date,
+    required: true,
+    validated: true,
+    example: '2000-03-02',
+  })
+  @IsNotFutureDate()
+  dateOfBirth: Date;
+
+  @PropertyDto({
+    type: String,
+    required: true,
+    validated: true,
+    example: '+447123456789',
+  })
+  @IsValidPhoneNumber()
+  phoneNumber: string;
+
+  @PropertyDto({
+    type: Gender,
+    required: true,
+    validated: true,
+    structure: 'enum',
+    example: Gender.Male,
+  })
+  gender: Gender;
+}
+
+export class UpdateUserProfileResponseDto extends SuccessResponseDto {}
+
+// ****************************** Update User Avatar ******************************
+export class UpdateUserAvatarResponseDto extends SuccessResponseDto {}
+
+// ***************************** Check Delete Constraint **************************
+export class getDeleteConstraintResponseDto {
+  @PropertyDto()
+  canDelete: boolean;
+
+  @PropertyDto({
+    type: DeleteConstraintReasonType,
+    structure: 'enum',
+  })
+  reasonType: string;
+}

@@ -1,0 +1,11 @@
+version: '3'
+
+services:
+  node:
+    container_name: crane_be_node
+    image: node:22.15.0-alpine3.21
+    tty: true
+    environment:
+      - HOST=0.0.0.0
+    working_dir: /work
+    restart: unless-stopped

@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  redis:
+    image: redis:8.0-rc1-alpine
+    container_name: crane_be_redis
+    restart: unless-stopped
+
+  redisinsight:
+    image: redislabs/redisinsight:latest
+    container_name: crane_be_redisinsight
+    restart: unless-stopped
+
+    environment:
+      RI_REDIS_HOST: redis
+      RI_REDIS_PORT: "6379"

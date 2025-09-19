@@ -1,0 +1,13 @@
+version: '3'
+
+services:
+  postgresql:
+    image: postgis/postgis:16-3.5-alpine
+    container_name: crane_be_postgresql
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_DATABASE}
+    logging:
+      driver: none
