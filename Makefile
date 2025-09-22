@@ -13,32 +13,31 @@ node:
 db:
 	docker-compose exec db bash
 install:
-	docker-compose exec node yarn
+	docker-compose exec node pnpm install
 dev:
-	docker-compose exec node yarn start:dev
+	docker-compose exec node pnpm start:dev
 buildNest:
-	docker-compose exec node yarn build
+	docker-compose exec node pnpm build
 setup:
 	make build
-	docker-compose exec node npm i -g @nestjs/cli
 	make install
 migrationCreate:
-	yarn migrate:create src/database/migrations/$(n)
+	pnpm migrate:create src/database/migrations/$(n)
 migrationGen:
-	docker-compose exec node yarn migrate:gen src/common/database/migrations/$(n)
+	docker-compose exec node pnpm migrate:gen src/common/database/migrations/$(n)
 migrate:
-	docker-compose exec node yarn migrate:run
+	docker-compose exec node pnpm migrate:run
 migrationRevert:
-	docker-compose exec node yarn migrate:revert
+	docker-compose exec node pnpm migrate:revert
 seedConfig:
-	docker-compose exec node yarn seed:config
+	docker-compose exec node pnpm seed:config
 seedRun:
-	docker-compose exec node yarn seed:run
+	docker-compose exec node pnpm seed:run
 seedRunOne:
-	docker-compose exec node yarn seed:runOne $(class)
+	docker-compose exec node pnpm seed:runOne $(class)
 ut:
-	docker-compose exec node yarn test
+	docker-compose exec node pnpm test
 e2e:
-	docker-compose exec node yarn test:e2e
+	docker-compose exec node pnpm test:e2e
 genModule:
 	npx @nestjs/cli g res $(n)
