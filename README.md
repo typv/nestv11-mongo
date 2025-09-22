@@ -17,44 +17,44 @@
 ## 1. Dependencies Installation
 
 ```bash
-  yarn install
+  pnpm install
 ```
 
 ## 2. Migrate database
 
 ### 2.1. Create migration file
 ```bash
-  yarn migrate:create src/database/migrations/your_migration_name
+  pnpm migrate:create src/database/migrations/your_migration_name
 ```
 
 ### 2.2. Migrate
 ```bash
-  yarn build
-  yarn migrate:run
+  pnpm build
+  pnpm migrate:run
 ```
 
 ### 2.3. Revert
 ```bash
-  yarn migrate:revert
+  pnpm migrate:revert
 ```
 
 ## 3. Running the app
 
 ```bash
 # development
-$ yarn start
+$ pnpm start
 
 # watch mode
-$ yarn start:dev
+$ pnpm start:dev
 
 # production mode
-$ yarn start:prod
+$ pnpm start:prod
 ```
 
 ## 4. Other
 ### 4.1. Run seed
 ```bash
-  yarn seed:run
+  pnpm seed:run
 ```
 
 # II. Build with Docker
@@ -62,9 +62,9 @@ $ yarn start:prod
 ## 1. Setup docker
 
 ```bash
-  docker compose up -d
+  docker compose up -d -- build
   docker compose exec node npm i -g @nestjs/cli
-  docker compose exec node yarn
+  docker compose exec node pnpm install
 ```
 
 ## 3. Migrate database
@@ -72,26 +72,26 @@ $ yarn start:prod
 ## 3.1. Migrate
 
 ```bash
-  docker compose exec node yarn migrate:run
+  docker compose exec node pnpm migrate:run
 ```
 
 ## 3.2. Revert Migration
 
 ```bash
-  docker compose exec node yarn migrate:revert
+  docker compose exec node pnpm migrate:revert
 ```
 
 ## 4. Run dev mode
 
 ```bash
-  docker compose exec node yarn start:dev
+  docker compose exec node pnpm start:dev
 ```
 
 ## 5. Other
 
 ### 5.1. Run seed
 ```bash
-  docker compose exec node yarn seed:run
+  docker compose exec node pnpm seed:run
 ```
 
 ### 5.2. Local url
