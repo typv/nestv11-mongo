@@ -12,10 +12,7 @@ import { DeleteConstraintReasonType } from '../user.enum';
 // ****************************** GetMyInformation ******************************
 export class GetMyInformationResponseDto {
   @PropertyDto()
-  id: number;
-
-  @PropertyDto()
-  uid: string;
+  id: string;
 
   @PropertyDto()
   email: string;
@@ -27,21 +24,6 @@ export class GetMyInformationResponseDto {
   lastName: string;
 
   @PropertyDto()
-  fullName?: string;
-
-  @PropertyDto()
-  dateOfBirth: Date;
-
-  @PropertyDto()
-  gender: Gender;
-
-  @PropertyDto()
-  phoneNumber: string;
-
-  @PropertyDto()
-  avatar: string;
-
-  @PropertyDto()
   isActive: boolean;
 
   @PropertyDto()
@@ -49,67 +31,12 @@ export class GetMyInformationResponseDto {
 
   @PropertyDto()
   role: Role;
-
-  @PropertyDto()
-  registrationCompleted: boolean;
-
-  @PropertyDto()
-  passwordChangedAt: Date;
-
-  @PropertyDto({
-    type: UserType,
-    required: false,
-    structure: 'enum',
-    example: UserType.Clinic,
-    description: 'User type (Clinic or SelfEmployed)',
-  })
-  userType?: UserType;
-
-  @PropertyDto()
-  practitionerProfileId?: number;
-
-  @PropertyDto()
-  billingInfoId?: number;
-
-  @PropertyDto()
-  clinicId?: number;
-
-  @PropertyDto()
-  canGenerateSystemFeedback?: boolean;
-
-  @PropertyDto({
-    type: Number,
-    required: false,
-    example: 1,
-    description: 'User language ID',
-  })
-  languageId?: number;
-
-  @PropertyDto({
-    type: String,
-    required: false,
-    example: 'English',
-    description: 'User language name',
-  })
-  language?: string;
 }
 
 // ****************************** GetUserInformation ******************************
 export class GetUserInformationResponseDto extends OmitType(GetMyInformationResponseDto, [
-  'passwordChangedAt',
-  'registrationCompleted',
   'emailVerified',
-  'uid',
-]) {
-  @PropertyDto({
-    type: UserType,
-    required: false,
-    structure: 'enum',
-    example: UserType.Clinic,
-    description: 'User type (Clinic or SelfEmployed)',
-  })
-  userType?: UserType;
-}
+]) {}
 
 export class SetUserTypeBodyDto {
   @PropertyDto({
