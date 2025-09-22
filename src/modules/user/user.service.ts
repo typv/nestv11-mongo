@@ -13,8 +13,9 @@ import {
 } from './dto';
 import { ERROR_RESPONSE } from '../../common/constants';
 import { SuccessResponseDto } from '../../common/dto/success-response.dto';
-import { User, UserDocument } from '../../models';
+import { Role } from '../../common/enums';
 import { ServerException } from '../../exceptions';
+import { User, UserDocument } from '../../models';
 import { UploadService } from '../upload';
 
 @Injectable()
@@ -100,5 +101,15 @@ export class UserService extends BaseService {
 
     await this.userModel.deleteOne({ _id: user._id });
     return this.responseSuccess();
+  }
+
+  async listUsers(): Promise<GetUserInformationResponseDto[]> {
+    const users = await this.userModel.find().exec();
+
+    return users.map((user) =>
+      plainToInstance(GetUserInformationResponseDto, user, {
+        excludeExtraneousValues: true,
+      }),
+    );
   }
 }

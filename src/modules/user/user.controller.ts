@@ -120,4 +120,19 @@ export class UserController {
   async deleteAccount(@User('id') userId: string): Promise<SuccessResponseDto> {
     return this.userService.deleteAccount(userId);
   }
+
+  @Get('users')
+  @SwaggerApiDocument({
+    response: {
+      status: HttpStatus.OK,
+      type: [GetMyInformationResponseDto],
+    },
+    operation: {
+      operationId: 'listUsers',
+      summary: 'Get listUsers',
+    },
+  })
+  listUsers(): Promise<GetUserInformationResponseDto[]> {
+    return this.userService.listUsers();
+  }
 }
