@@ -1,15 +1,15 @@
-# snaptic_care_be
+# Nest1v11-mongo
 
 # Getting Started
 
 ## Server Requirements
 
 - Node.js 22
-- PostgreSQL 16
+- Mongo latest
 
 ## Installing preparation
 
-1. Default Application $BASEPATH : `/home/app.user/nest_base_v11`
+1. Default Application $BASEPATH : `/home/app.user/nestv11-mongo`
 
 2. Copy the .env file from .env.example under $BASEPATH, fill your config in .env file instead of example config
 
@@ -20,25 +20,7 @@
   pnpm install
 ```
 
-## 2. Migrate database
-
-### 2.1. Create migration file
-```bash
-  pnpm migrate:create src/database/migrations/your_migration_name
-```
-
-### 2.2. Migrate
-```bash
-  pnpm build
-  pnpm migrate:run
-```
-
-### 2.3. Revert
-```bash
-  pnpm migrate:revert
-```
-
-## 3. Running the app
+## 2. Running the app
 
 ```bash
 # development
@@ -51,12 +33,6 @@ $ pnpm start:dev
 $ pnpm start:prod
 ```
 
-## 4. Other
-### 4.1. Run seed
-```bash
-  pnpm seed:run
-```
-
 # II. Build with Docker
 
 ## 1. Setup docker
@@ -67,33 +43,14 @@ $ pnpm start:prod
   docker compose exec node pnpm install
 ```
 
-## 3. Migrate database
-
-## 3.1. Migrate
-
-```bash
-  docker compose exec node pnpm migrate:run
-```
-
-## 3.2. Revert Migration
-
-```bash
-  docker compose exec node pnpm migrate:revert
-```
-
-## 4. Run dev mode
+## 2. Run dev mode
 
 ```bash
   docker compose exec node pnpm start:dev
 ```
 
-## 5. Other
+## 3. Other
 
-### 5.1. Run seed
-```bash
-  docker compose exec node pnpm seed:run
-```
+### 3.1. Local url
 
-### 5.2. Local url
-
-http://localhost:31003
+http://localhost:30050
