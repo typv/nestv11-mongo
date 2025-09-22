@@ -1,4 +1,4 @@
-# Nest1v11-mongo
+# Crane BE
 
 # Getting Started
 
@@ -9,7 +9,7 @@
 
 ## Installing preparation
 
-1. Default Application $BASEPATH : `/home/app.user/nestv11-mongo`
+1. Default Application $BASEPATH : `/home/app.user/crane-be`
 
 2. Copy the .env file from .env.example under $BASEPATH, fill your config in .env file instead of example config
 
