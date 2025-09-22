@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: "CRANE-BE",
-      script: "dist/src/main.js",
+      script: "pnpm run start:prod",
       instances: 1,
       exec_mode: "fork",
       watch: false

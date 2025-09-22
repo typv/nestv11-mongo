@@ -72,8 +72,8 @@ import { AppService } from './app.service';
     RedisModule,
     EmailModule,
     UserModule,
-    AwsS3Module,
-    UploadModule,
+    // AwsS3Module,
+    // UploadModule,
   ],
   controllers: [AppController],
   providers: [
