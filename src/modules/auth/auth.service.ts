@@ -58,7 +58,7 @@ export class AuthService {
       throw new ServerException(ERROR_RESPONSE.INVALID_CREDENTIALS);
     }
 
-    return { success: true, email };
+    return this.manageUserToken(user);
   }
 
   async signUp(body: SignUpBodyDto) {

@@ -72,7 +72,6 @@ import { AppService } from './app.service';
     RedisModule,
     EmailModule,
     UserModule,
-    FirebaseModule,
     AwsS3Module,
     UploadModule,
   ],
