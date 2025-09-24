@@ -22,12 +22,12 @@ import { HttpLoggerMiddleware } from 'src/middlewares';
 import { AuthModule } from 'src/modules/auth';
 import { AwsS3Module } from 'src/modules/base/aws-s3';
 import { EmailModule } from 'src/modules/base/email';
-import { FirebaseModule } from 'src/modules/base/firebase/firebase.module';
 import { REDIS_CLIENT, RedisModule } from 'src/modules/base/redis';
 import { UploadModule } from 'src/modules/upload';
 import { UserModule } from 'src/modules/user';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { WorkbookModule } from './workbook/workbook.module';
 
 @Module({
   imports: [
@@ -74,6 +74,7 @@ import { AppService } from './app.service';
     UserModule,
     AwsS3Module,
     UploadModule,
+    WorkbookModule,
   ],
   controllers: [AppController],
   providers: [

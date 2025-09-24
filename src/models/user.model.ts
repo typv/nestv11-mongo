@@ -4,34 +4,31 @@ import { Role } from '../common/enums';
 
 export type UserDocument = HydratedDocument<User>;
 
-@Schema({ timestamps: true })
+@Schema({ timestamps: true, collection: 'users' })
 export class User {
   @Prop({ type: Types.ObjectId, default: () => new Types.ObjectId() })
   _id?: Types.ObjectId;
 
-  @Prop()
+  @Prop({ required: true, unique: true })
   email: string;
 
   @Prop()
-  firstName: string;
+  firstName?: string;
 
   @Prop()
-  lastName: string;
+  lastName?: string;
 
-  @Prop()
+  @Prop({ required: true })
   password: string;
 
-  @Prop()
+  @Prop({ default: false })
   emailVerified: boolean;
 
-  @Prop()
+  @Prop({ default: Role.User })
   role: Role;
 
-  @Prop()
+  @Prop({ default: false })
   isActive: boolean;
-
-  @Prop()
-  registrationCompleted: boolean;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

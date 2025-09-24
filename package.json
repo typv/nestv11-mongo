@@ -63,6 +63,7 @@
     "@repo/email-templates": "workspace:*",
     "@trivago/prettier-plugin-sort-imports": "^5.2.2",
     "@types/passport-jwt": "^4.0.1",
+    "@univerjs/core": "^0.10.9",
     "add": "^2.0.6",
     "axios": "^1.10.0",
     "bcryptjs": "^3.0.2",

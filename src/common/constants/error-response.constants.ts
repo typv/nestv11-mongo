@@ -256,4 +256,24 @@ export const ERROR_RESPONSE = {
       message: `${objectName} must be required.`,
     };
   },
+  WORKBOOK_ALREADY_EXISTED: {
+    statusCode: HttpStatus.CONFLICT,
+    errorCode: 'workbook_already_existed',
+    message: 'Workbook already existed',
+  },
+  WORKSHEET_ALREADY_EXISTED: {
+    statusCode: HttpStatus.CONFLICT,
+    errorCode: 'worksheet_already_existed',
+    message: 'Worksheet already existed',
+  },
+  SHEET_ORDERS_DO_NOT_MATCH_THE_NUMBER_OF_SHEETS: {
+    statusCode: HttpStatus.BAD_REQUEST,
+    errorCode: 'sheet_orders_do_not_match_the_number_of_sheets',
+    message: 'Sheet orders do not match the number of sheets',
+  },
+  SHEET_ORDERS_DO_NOT_MATCH_THE_SHEET_IDS: {
+    statusCode: HttpStatus.BAD_REQUEST,
+    errorCode: 'sheet_orders_do_not_match_the_sheet_ids',
+    message: 'Sheet orders do not match the sheet ids',
+  },
 };
