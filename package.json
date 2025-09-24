@@ -76,6 +76,7 @@
     "dayjs": "^1.11.13",
     "decimal.js": "^10.6.0",
     "dotenv": "^17.2.2",
+    "express": "^5.1.0",
     "express-basic-auth": "^1.2.1",
     "express-rate-limit": "^7.5.0",
     "express-request-id": "^3.0.0",
