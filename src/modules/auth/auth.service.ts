@@ -143,13 +143,6 @@ export class AuthService {
     if (!cachedToken || cachedToken !== token)
       throw new ServerException(ERROR_RESPONSE.LINK_EXPIRED);
 
-    if (user.registrationCompleted === true) {
-      await this.userModel.updateOne(
-        { _id: user._id },
-        { $set: { emailVerified: true } },
-      );
-    }
-
     // Update redis
     await this.redisService.deleteKey(verifyEmailKey);
     await this.redisService.deleteByPattern(
