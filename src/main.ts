@@ -1,6 +1,6 @@
-import * as bodyParser from 'body-parser';
 import { ClassSerializerInterceptor } from '@nestjs/common';
 import { NestFactory, Reflector } from '@nestjs/core';
+import { json, urlencoded } from 'express';
 import requestId from 'express-request-id';
 import helmet from 'helmet';
 import { WinstonModule } from 'nest-winston';
@@ -23,8 +23,8 @@ async function bootstrap() {
   app.use(helmet());
   app.enableCors();
   app.use(requestId());
-  app.use(bodyParser.json({ limit: '50mb' }));
-  app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
+  app.use(json({ limit: '50mb' }));
+  app.use(urlencoded({ extended: true, limit: '50mb' }));
   // app.use(
   //   rateLimit({
   //     windowMs: 60 * 1000, // 1 minutes
