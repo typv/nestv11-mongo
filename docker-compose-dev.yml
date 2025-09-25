@@ -5,10 +5,47 @@ services:
       file: ./.docker/compose/mongodb.yml
       service: mongodb
     ports:
-      - "27030:27017"
+      - '27030:27017'
     volumes:
-      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+      - ${PWD}/.docker/config/mongo/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
       - ${PWD}/.docker/mongodb_data:/data/db
+    networks:
+      - crane-network
+    command: [ "mongod", "--replSet", "dbrs", "--bind_ip_all" ]
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mongosh",
+          "--host", "localhost",
+          "--eval", "db.adminCommand('ping')",
+        ]
+      interval: 5s
+      timeout: 2s
+      retries: 5
+      start_period: 20s
+
+  mongodb-init-rs:
+    extends:
+      file: ./.docker/compose/mongodb.yml
+      service: mongodb
+    container_name: crane_be_mongodb_init_rs
+    restart: 'no'
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - crane-network
+    command: >
+      mongosh 
+        --host mongodb:27017 
+        --eval "
+          rs.initiate({
+            _id: 'dbrs',
+            members: [{ _id: 0, host: 'mongodb:27017' }]
+          });
+        "
+
   redis:
     extends:
       file: ./.docker/compose/redis.yml
