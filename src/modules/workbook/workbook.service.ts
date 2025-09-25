@@ -66,6 +66,7 @@ export class WorkbookService extends BaseService {
         {
           $setOnInsert: {
             univerWorkbookId: workbookData.id,
+            name: workbookData.name,
             owner: new Types.ObjectId(userId),
           },
         },
