@@ -42,8 +42,7 @@ import { WorkbookModule } from './workbook/workbook.module';
     }),
     MongooseModule.forRootAsync({
       useFactory: (mongodbConfig: ConfigType<typeof mongodbConfiguration>) => {
-        const uri = `mongodb://${mongodbConfig.username}:${mongodbConfig.password}@${mongodbConfig.host}:${mongodbConfig.port}/${mongodbConfig.database}?authSource=admin`;
-        return { uri };
+        return { uri: mongodbConfig.uri };
       },
       inject: [mongodbConfiguration.KEY],
     }),
