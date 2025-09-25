@@ -15,7 +15,7 @@ import {
   WorksheetDocument,
 } from '../../models';
 import { BaseService } from '../base.service';
-import { ImportWorkbookDto } from './dto';
+import { FindWorkbookListDto, ImportWorkbookDto, WorkbookListResponseDto } from './dto';
 import { JsonStreamUtil } from 'src/common/utilities/json-stream.util';
 import {
   CustomData,
@@ -25,6 +25,7 @@ import {
   Nullable,
 } from '@univerjs/core';
 import { Readable } from 'node:stream';
+import { PaginationResponseDto } from 'src/common/dto';
 
 @Injectable()
 export class WorkbookService extends BaseService {
@@ -134,5 +135,65 @@ export class WorkbookService extends BaseService {
         ...ERROR_RESPONSE.SHEET_ORDERS_DO_NOT_MATCH_THE_SHEET_IDS,
       });
     }
+  }
+
+  async workbookList(userId: string, query: FindWorkbookListDto): Promise<PaginationResponseDto<WorkbookListResponseDto>> {
+    const { searchKeyword, statuses, from, until, page, pageSize } = query;
+    const pipeline = [];
+
+    const initialMatch: any = { isCurrentActive: true };
+
+    if (searchKeyword) {
+      initialMatch.name = new RegExp(searchKeyword, 'i');
+    }
+    if (from || until) {
+      const updatedAtCondition: any = {};
+      if (from) updatedAtCondition['$gte'] = new Date(from);
+      if (until) updatedAtCondition['$lte'] = new Date(until);
+      if (Object.keys(updatedAtCondition).length > 0) {
+        initialMatch.updatedAt = updatedAtCondition;
+      }
+    }
+    pipeline.push({ $match: initialMatch });
+
+    pipeline.push({
+      $lookup: {
+        from: 'workbooks',
+        localField: 'workbook',
+        foreignField: '_id',
+        as: 'w'
+      }
+    });
+    pipeline.push({
+      '$unwind': {
+        path: '$w',
+        preserveNullAndEmptyArrays: true
+      }
+    });
+
+    if (statuses.length) {
+      pipeline.push({
+        $match: {
+          'w.approvedStatus': { $in: statuses }
+        }
+      });
+    }
+
+    pipeline.push({
+      $project: {
+        _id: { $toString: '$_id' },
+        originalName: '$w.name',
+        versionName: '$name',
+        version: '$version',
+        approvedStatus: '$w.approvedStatus',
+        uploadedTime: '$w.createdAt',
+        createdAt: 1,
+        updatedAt: 1,
+      }
+    });
+    pipeline.push({ $sort: { createdAt: -1 } });
+    const aggregationBuilder = this.workbookVersionModel.aggregate(pipeline);
+
+    return await this.aggregatePaginate(aggregationBuilder, page, pageSize);
   }
 }
