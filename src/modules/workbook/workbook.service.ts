@@ -1,6 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import { IWorksheetData } from '@univerjs/core';
 import { ClientSession, Connection, Model, Types } from 'mongoose';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
@@ -17,6 +16,15 @@ import {
 } from '../../models';
 import { BaseService } from '../base.service';
 import { ImportWorkbookDto } from './dto';
+import { JsonStreamUtil } from 'src/common/utilities/json-stream.util';
+import {
+  CustomData,
+  IStyleData,
+  IWorkbookData,
+  IWorksheetData,
+  Nullable,
+} from '@univerjs/core';
+import { Readable } from 'node:stream';
 
 @Injectable()
 export class WorkbookService extends BaseService {
@@ -36,7 +44,16 @@ export class WorkbookService extends BaseService {
     userId: string,
     body: ImportWorkbookDto,
   ): Promise<SuccessResponseDto> {
-    const { sheets, ...workbookData } = body;
+    const { file } = body;
+    const jsonStream: Readable = Readable.from(file.buffer);
+    let workbookData: IWorkbookData;
+    try {
+      workbookData = await JsonStreamUtil.processJsonStreamSimple<IWorkbookData>(jsonStream);
+    } catch (e) {
+      throw new ServerException(ERROR_RESPONSE.INVALID_OBJECT('json'))
+    }
+
+    const { sheets } = workbookData;
     const sheetsData = Object.values(sheets);
     const sheetIds = Object.keys(sheets);
     this.validateSheetOrder(workbookData.sheetOrder, sheetIds);
