@@ -11,7 +11,7 @@ services:
       - ${PWD}/.docker/mongodb_data:/data/db
     networks:
       - crane-network
-    command: [ "mongod", "--replSet", "dbrs", "--bind_ip_all" ]
+    command: [ --replSet", "dbrs", "--bind_ip_all" ]
     healthcheck:
       test:
         [
