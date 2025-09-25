@@ -2,6 +2,7 @@ import { HasMimeType, IsFile, MaxFileSize } from 'nestjs-form-data';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { fileValidationConstant } from 'src/common/constants';
+import { PropertyDto } from 'src/decorators';
 
 export class ImportWorkbookDto{
   @IsFile({
@@ -16,8 +17,11 @@ export class ImportWorkbookDto{
   @IsNotEmpty()
   file: Express.Multer.File;
 
-  @ApiProperty({ example: 'application/octet-stream' })
-  @IsString()
-  @IsOptional()
+  @PropertyDto({
+    type: String,
+    required: false,
+    validated: true,
+    example: 'application/octet-stream',
+  })
   contentType: string = 'application/octet-stream';
 }

@@ -29,6 +29,9 @@ export class Workbook {
   @Prop({ type: String, required: true, unique: true })
   univerWorkbookId: string;
 
+  @Prop({ type: String, required: true, unique: false })
+  name: string;
+
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   owner: User;
 
