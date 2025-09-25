@@ -29,7 +29,6 @@ export class AuthStrategy extends PassportStrategy(Strategy) {
 
     // Check valid token
     const userTokenKey = this.redisService.getUserTokenKey(id, jti);
-    console.log('🚀 ~ userTokenKey:', userTokenKey);
     const isTokenValid = await this.redisService.getValue<string>(userTokenKey);
     if (!isTokenValid) throw new ServerException(ERROR_RESPONSE.UNAUTHORIZED);
 

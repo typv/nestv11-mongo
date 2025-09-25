@@ -10,6 +10,7 @@ import {
   Worksheet,
   WorksheetSchema,
 } from '../../models';
+import { NestjsFormDataModule } from 'nestjs-form-data';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import {
       { name: Worksheet.name, schema: WorksheetSchema },
       { name: WorkbookVersion.name, schema: WorkbookVersionSchema },
     ]),
+    NestjsFormDataModule,
   ],
   controllers: [WorkbookController],
   providers: [WorkbookService],
