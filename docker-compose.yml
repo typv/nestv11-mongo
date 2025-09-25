@@ -86,7 +86,7 @@ services:
       - crane-network
 
 volumes:
-  pgdata:
+  redis-data:
   redisinsight_data:
   mongodb_data:
 

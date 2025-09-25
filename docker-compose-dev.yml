@@ -51,7 +51,17 @@ services:
       file: ./.docker/compose/redis.yml
       service: redis
     ports:
-      - "63079:6379"
+      - '63079:6379'
+    networks:
+      - crane-network
+    volumes:
+      - ${PWD}/.docker/redis-data:/data
+    command: redis-server --appendonly yes --dir /data
 
 volumes:
+  redis-data:
   mongodb_data:
+
+networks:
+  crane-network:
+    driver: bridge
