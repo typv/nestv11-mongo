@@ -1,10 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { IWorksheetData } from '@univerjs/core';
-import { Model, Types } from 'mongoose';
+import { ClientSession, Connection, Model, Types } from 'mongoose';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
-import { ImportWorkbookDto } from './dto';
 import { ERROR_RESPONSE } from '../../common/constants';
 import { SuccessResponseDto } from '../../common/dto/success-response.dto';
 import { ServerException } from '../../exceptions';
@@ -17,6 +16,7 @@ import {
   WorksheetDocument,
 } from '../../models';
 import { BaseService } from '../base.service';
+import { ImportWorkbookDto } from './dto';
 
 @Injectable()
 export class WorkbookService extends BaseService {
@@ -26,6 +26,7 @@ export class WorkbookService extends BaseService {
     @InjectModel(Worksheet.name) private worksheetModel: Model<WorksheetDocument>,
     @InjectModel(WorkbookVersion.name)
     private workbookVersionModel: Model<WorkbookVersionDocument>,
+    @InjectConnection() private readonly connection: Connection
   ) {
     super();
     this.logger = this.logger.child({ context: WorkbookService.name });
@@ -38,8 +39,10 @@ export class WorkbookService extends BaseService {
     const { sheets, ...workbookData } = body;
     const sheetsData = Object.values(sheets);
     const sheetIds = Object.keys(sheets);
-
     this.validateSheetOrder(workbookData.sheetOrder, sheetIds);
+
+    const session = await this.connection.startSession();
+    session.startTransaction();
     try {
       const workbook = await this.workbookModel.findOneAndUpdate(
         { univerWorkbookId: workbookData.id, owner: new Types.ObjectId(userId) },
@@ -49,15 +52,15 @@ export class WorkbookService extends BaseService {
             owner: new Types.ObjectId(userId),
           },
         },
-        { upsert: true, new: true },
+        { upsert: true, new: true, session },
       );
       // Create workbook version
-      const version = await this.getNextWorkbookVersion(workbook._id);
-      const workbookVersion = await this.workbookVersionModel.create({
+      const version = await this.getNextWorkbookVersion(workbook._id, session);
+      const [workbookVersion] = await this.workbookVersionModel.create([{
         ...workbookData,
         workbook: workbook._id,
         version,
-      });
+      }], { session });
       // Create worksheets
       const worksheetsDocs = sheetsData.map((sheet: IWorksheetData) => {
         return {
@@ -67,15 +70,18 @@ export class WorkbookService extends BaseService {
           workbookVersion: workbookVersion._id,
         };
       });
-      const newWorksheets = await this.worksheetModel.insertMany(worksheetsDocs);
+      const newWorksheets = await this.worksheetModel.insertMany(worksheetsDocs, { session });
       // Link worksheets to workbook version
       await this.workbookVersionModel.updateOne(
         { _id: workbookVersion._id },
         { $set: { sheets: newWorksheets.map((worksheet) => worksheet._id) } },
+        { session }
       );
+      await session.commitTransaction();
 
       return this.responseSuccess();
     } catch (error: unknown) {
+      await session.abortTransaction();
       this.logger.error({
         message: 'WorkbookService.importWorkbook: Failed to import workbook',
         context: 'WorkbookService.importWorkbook',
@@ -85,14 +91,17 @@ export class WorkbookService extends BaseService {
         ...ERROR_RESPONSE.BAD_REQUEST,
         message: 'Failed to import workbook',
       });
+    } finally {
+      await session.endSession();
     }
   }
 
   /* ----Helper Methods---- */
-  private async getNextWorkbookVersion(workbookId: Types.ObjectId): Promise<number> {
+  private async getNextWorkbookVersion(workbookId: Types.ObjectId, session?: ClientSession): Promise<number> {
     const latest = await this.workbookVersionModel
       .findOne({ workbook: workbookId })
-      .sort({ version: -1 });
+      .sort({ version: -1 })
+      .session(session);
     return (latest?.version ?? 0) + 1;
   }
 
