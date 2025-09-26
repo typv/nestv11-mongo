@@ -2,6 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
 import { User } from './user.model';
 import { WorkbookPermission } from '../common/enums/workbook.enum';
+import { WorkbookApprovedStatus } from 'src/modules/workbook/workbook.enum';
 
 @Schema({ _id: false })
 export class Collaborator {
@@ -31,6 +32,14 @@ export class Workbook {
 
   @Prop({ type: String, required: true, unique: false })
   name: string;
+
+  @Prop({
+    type: String,
+    enum: Object.values(WorkbookApprovedStatus),
+    required: true,
+    default: WorkbookApprovedStatus.InProgress
+  })
+  approvedStatus: WorkbookApprovedStatus;
 
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   owner: User;

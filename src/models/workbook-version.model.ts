@@ -5,6 +5,7 @@ import { User } from './user.model';
 import { Worksheet } from './worksheet.model';
 import { WorkbookPermission } from '../common/enums/workbook.enum';
 import { LocaleType } from '../modules/workbook/dto';
+import { WorkbookVersionStatus } from 'src/modules/workbook/workbook.enum';
 
 @Schema({ _id: false })
 export class Collaborator {
@@ -50,11 +51,22 @@ export class WorkbookVersion {
   @Prop({ type: Number, required: true, default: 1 })
   version: number;
 
+  @Prop({ type: Boolean, required: true, default: true })
+  isCurrentActive: boolean;
+
   @Prop({ type: [Types.ObjectId], ref: 'Worksheet', required: true })
   sheets: Worksheet[];
 
-  @Prop({ type: Types.ObjectId, ref: 'Workbook', required: true })
+  @Prop({ type: Types.ObjectId, ref: 'workbooks', required: true })
   workbook: Workbook;
+
+  @Prop({
+    type: String,
+    enum: Object.values(WorkbookVersionStatus),
+    required: true,
+    default: WorkbookVersionStatus.Awaiting
+  })
+  status: WorkbookVersionStatus;
 }
 
 export const WorkbookVersionSchema = SchemaFactory.createForClass(WorkbookVersion);
