@@ -3,13 +3,16 @@ import { WorkbookApprovedStatus } from 'src/modules/workbook/workbook.enum';
 
 export class WorkbookListResponseDto {
   @PropertyDto()
-  id: string;
+  _id: string;
 
   @PropertyDto()
-  name: string;
+  originalName: string;
 
   @PropertyDto()
-  uploadTime: Date;
+  versionName: string;
+
+  @PropertyDto()
+  uploadedTime: Date;
 
   @PropertyDto()
   lastApproveBy: Date;
@@ -19,4 +22,10 @@ export class WorkbookListResponseDto {
 
   @PropertyDto()
   approvedStatus: WorkbookApprovedStatus;
+
+  @PropertyDto()
+  createdAt: Date;
+
+  @PropertyDto()
+  updatedAt: Date;
 }
