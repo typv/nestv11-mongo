@@ -23,8 +23,8 @@ async function bootstrap() {
   app.use(helmet());
   app.enableCors();
   app.use(requestId());
-  app.use(json({ limit: '50mb' }));
-  app.use(urlencoded({ extended: true, limit: '50mb' }));
+  // app.use(json({ limit: '50mb' }));
+  // app.use(urlencoded({ extended: true, limit: '50mb' }));
   // app.use(
   //   rateLimit({
   //     windowMs: 60 * 1000, // 1 minutes
