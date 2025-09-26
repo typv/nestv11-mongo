@@ -184,7 +184,7 @@ export class WorkbookService extends BaseService {
         _id: { $toString: '$_id' },
         originalName: '$w.name',
         versionName: '$name',
-        version: '$version',
+        version: 1,
         approvedStatus: '$w.approvedStatus',
         uploadedTime: '$w.createdAt',
         createdAt: 1,
