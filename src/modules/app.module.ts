@@ -28,6 +28,7 @@ import { UserModule } from 'src/modules/user';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { WorkbookModule } from './workbook/workbook.module';
+import { RoleModule } from 'src/modules/role/role.module';
 
 @Module({
   imports: [
@@ -74,6 +75,7 @@ import { WorkbookModule } from './workbook/workbook.module';
     AwsS3Module,
     UploadModule,
     WorkbookModule,
+    RoleModule,
   ],
   controllers: [AppController],
   providers: [
