@@ -1,4 +1,4 @@
-import { PermissionCode, RoleCode } from 'src/common/enums';
+import { PermissionCode } from 'src/common/enums';
 
 export const masterDatePermissions = [
   { code: PermissionCode.UploadFileInputs, name: 'Upload File Inputs' },
@@ -10,33 +10,3 @@ export const masterDatePermissions = [
   { code: PermissionCode.CreateUser, name: 'Create new user' },
   { code: PermissionCode.PermissionConfiguration, name: 'Permission Configuration' },
 ]
-
-export const rolePermissionsMapping: Record<RoleCode, PermissionCode[]> = {
-  [RoleCode.Admin]: [
-    PermissionCode.CreateUser,
-    PermissionCode.PermissionConfiguration,
-  ],
-  [RoleCode.IMA]: [
-    PermissionCode.UploadFileInputs,
-    PermissionCode.UpdateData,
-    PermissionCode.GiveComments,
-    PermissionCode.ReceiveNotification,
-  ],
-  [RoleCode.IMS]: [
-    PermissionCode.GiveComments,
-    PermissionCode.Review,
-    PermissionCode.ReceiveNotification,
-  ],
-  [RoleCode.PMA]: [
-    PermissionCode.UploadFileInputs,
-    PermissionCode.UpdateData,
-    PermissionCode.GiveComments,
-    PermissionCode.Review,
-    PermissionCode.ReceiveNotification,
-  ],
-  [RoleCode.PMS]: [
-    PermissionCode.GiveComments,
-    PermissionCode.Review,
-    PermissionCode.ReceiveNotification,
-  ],
-};
