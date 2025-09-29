@@ -11,14 +11,17 @@ import { AuthStrategy, RefreshTokenStrategy } from 'src/modules/auth/strategies'
 import { GoogleAuthModule } from 'src/modules/base/google-auth';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { User, UserSchema } from '../../models';
+import { Role, RoleSchema, User, UserSchema } from '../../models';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       load: [jwtConfiguration, codeExpiresConfiguration, chatConfiguration],
     }),
-    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+    MongooseModule.forFeature([
+      { name: User.name, schema: UserSchema },
+      { name: Role.name, schema: RoleSchema },
+    ]),
     JwtModule.registerAsync({
       imports: [ConfigModule.forFeature(jwtConfiguration)],
       useFactory: (jwtConfig: ConfigType<typeof jwtConfiguration>) => ({

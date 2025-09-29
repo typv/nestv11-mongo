@@ -1,6 +1,8 @@
 export const commandConstants = {
   createAdmin: 'create-admin',
-  createRoles: 'create-roles',
+  seedAll: 'seed:all',
+  seedRoles: 'seed:roles',
+  seedPermissions: 'seed:permissions',
 };
 
 export const questionConstants = {

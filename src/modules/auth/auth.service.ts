@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { ConfigType } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import mongoose, { Model } from 'mongoose';
+import mongoose, { Model, Types } from 'mongoose';
 import { Connection } from 'mongoose';
 import { appConfiguration, codeExpiresConfiguration, jwtConfiguration } from 'src/config';
 import { EmailService } from 'src/modules/base/email';
@@ -23,10 +23,10 @@ import {
   VerifyResetPasswordLinkResponseDto,
 } from './dto';
 import { ERROR_RESPONSE } from '../../common/constants';
-import { AccountAction, JwtTokenType, UserType } from '../../common/enums';
+import { AccountAction, JwtTokenType, RoleCode, UserType } from '../../common/enums';
 import { HashUtil } from '../../common/utilities';
 import { getTtlValue } from '../../common/utilities/time.util';
-import { User, UserDocument } from '../../models';
+import { Role, RoleDocument, User, UserDocument } from '../../models';
 import { ServerException } from '../../exceptions';
 
 @Injectable()
@@ -43,6 +43,7 @@ export class AuthService {
     @Inject(codeExpiresConfiguration.KEY)
     private readonly codeExpiresConfig: ConfigType<typeof codeExpiresConfiguration>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @InjectModel(Role.name) private roleModel: Model<RoleDocument>,
     @InjectConnection() private connection: Connection,
   ) {}
 
@@ -62,9 +63,13 @@ export class AuthService {
   }
 
   async signUp(body: SignUpBodyDto) {
-    const { email, password } = body;
+    const { email, password, roleId } = body;
     const user = await this.userModel.findOne({ email });
     if (user) throw new ServerException(ERROR_RESPONSE.USER_ALREADY_EXISTS);
+
+    const role = await this.roleModel.findOne({ _id: new Types.ObjectId(roleId) });
+    if (!role) throw new ServerException(ERROR_RESPONSE.OBJECT_NOT_FOUND('Role'));
+    if (role.code === RoleCode.Admin) throw new ServerException(ERROR_RESPONSE.INVALID_OBJECT('Role'));
 
     const hashedPassword = await HashUtil.hashData(password);
 
@@ -74,7 +79,8 @@ export class AuthService {
       isActive: true,
       emailVerified: false,
       password: hashedPassword,
-      userType: UserType.User
+      userType: UserType.User,
+      role: roleId
     };
     const newUser = await this.userModel.create(userData);
 
