@@ -181,7 +181,7 @@ export class WorkbookService extends BaseService {
 
     pipeline.push({
       $project: {
-        _id: { $toString: '$_id' },
+        id: { $toString: '$_id' },
         univerWorkbookId: '$w.univerWorkbookId',
         originalName: '$w.name',
         versionName: '$name',
@@ -190,6 +190,7 @@ export class WorkbookService extends BaseService {
         uploadedTime: '$w.createdAt',
         createdAt: 1,
         updatedAt: 1,
+        _id: 0
       }
     });
     pipeline.push({ $sort: { createdAt: -1 } });
