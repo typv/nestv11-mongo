@@ -1,11 +1,3 @@
-export enum RoleCode {
-  Admin = 'Admin',
-  IMA = 'IMA',
-  IMS = 'IMS',
-  PMA = 'PMA',
-  PMS = 'PMS',
-}
-
 export enum BodyContentType {
   Json = 'application/json',
   MultipartFormData = 'multipart/form-data',

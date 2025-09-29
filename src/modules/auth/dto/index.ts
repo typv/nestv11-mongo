@@ -33,6 +33,14 @@ export class SignUpBodyDto {
     minSymbols: 1,
   })
   password: string;
+
+  @PropertyDto({
+    type: String,
+    required: true,
+    validated: true,
+    example: '68da09202e038d27742f08d5',
+  })
+  roleId: string;
 }
 
 export class SignUpResponseDto {

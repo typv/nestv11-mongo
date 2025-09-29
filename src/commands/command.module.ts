@@ -6,7 +6,8 @@ import { ConfigModule, ConfigType } from '@nestjs/config';
 import { mongodbConfiguration, validationSchema } from 'src/config';
 import { User, UserSchema } from 'src/models';
 import { Role, RoleSchema } from 'src/models/role.model';
-import { CreateRolesCommand } from 'src/commands/create-roles.command';
+import { RoleSeederCommand } from 'src/commands/seeders/role-seeder.command';
+import { AllSeederCommand } from 'src/commands/seeders/all-seeder.command';
 
 @Module({
   imports: [
@@ -33,7 +34,8 @@ import { CreateRolesCommand } from 'src/commands/create-roles.command';
   providers: [
     CreateAdminCommand,
     CreateAdminQuestions,
-    CreateRolesCommand
+    AllSeederCommand,
+    RoleSeederCommand
   ],
   exports: [],
 })
