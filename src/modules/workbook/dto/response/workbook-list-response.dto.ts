@@ -6,6 +6,9 @@ export class WorkbookListResponseDto {
   _id: string;
 
   @PropertyDto()
+  univerWorkbookId: string;
+
+  @PropertyDto()
   originalName: string;
 
   @PropertyDto()
