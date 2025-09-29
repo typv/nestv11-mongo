@@ -2,7 +2,7 @@ import { ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
 import { ERROR_RESPONSE } from 'src/common/constants';
-import { Role, UserType } from 'src/common/enums';
+import { RoleCode, UserType } from 'src/common/enums';
 import { ACCESS_ROLES_KEY, IS_PUBLIC_KEY, USER_TYPES_KEY } from 'src/decorators';
 import { ServerException } from 'src/exceptions';
 import { UserRequestPayload } from 'src/modules/auth';
@@ -34,7 +34,7 @@ export class RoleBasedAccessControlGuard extends AuthGuard('jwt') {
     }
 
     // Check if authorization is needed
-    const allowedRoles = this.reflector.getAllAndOverride<Role[]>(ACCESS_ROLES_KEY, [
+    const allowedRoles = this.reflector.getAllAndOverride<RoleCode[]>(ACCESS_ROLES_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);

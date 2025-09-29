@@ -1,6 +1,9 @@
-export enum Role {
+export enum RoleCode {
   Admin = 'Admin',
-  User = 'User',
+  IMA = 'IMA',
+  IMS = 'IMS',
+  PMA = 'PMA',
+  PMS = 'PMS',
 }
 
 export enum BodyContentType {
@@ -13,14 +16,9 @@ export enum AccountAction {
   ResetPassword = 'reset-password',
 }
 
-export enum PractitionerType {
-  SelfEmployed = 'self-employed',
-  Clinic = 'clinic',
-}
-
 export enum UserType {
-  SelfEmployed = 'self-employed',
-  Clinic = 'clinic',
+  Admin = 'Admin',
+  User = 'User',
 }
 
 export enum SortDirection {
@@ -45,16 +43,4 @@ export enum DayOfWeek {
   FRIDAY = 4,
   SATURDAY = 5,
   SUNDAY = 6,
-}
-
-export enum LocationType {
-  ALL = 'all',
-  ONLINE = 'online',
-  OFFLINE = 'offline',
-}
-
-export enum RecurringRepeatType {
-  DAY = 'day',
-  WEEK = 'week',
-  MONTH = 'month',
 }

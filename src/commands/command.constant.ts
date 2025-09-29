@@ -1,6 +1,6 @@
 export const commandConstants = {
   createAdmin: 'create-admin',
-  syncStatisticAppointments: 'sync-statistics-appointments',
+  createRoles: 'create-roles',
 };
 
 export const questionConstants = {

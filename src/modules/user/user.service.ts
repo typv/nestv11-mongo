@@ -13,7 +13,6 @@ import {
 } from './dto';
 import { ERROR_RESPONSE } from '../../common/constants';
 import { SuccessResponseDto } from '../../common/dto/success-response.dto';
-import { Role } from '../../common/enums';
 import { ServerException } from '../../exceptions';
 import { User, UserDocument } from '../../models';
 import { UploadService } from '../upload';

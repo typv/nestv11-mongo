@@ -1,6 +1,6 @@
 import { IsEmail, IsStrongPassword } from 'class-validator';
 import { SuccessResponseDto } from 'src/common/dto/success-response.dto';
-import { Gender, Role } from 'src/common/enums';
+import { Gender, RoleCode } from 'src/common/enums';
 import {
   IsLettersAndSpaces,
   IsNotFutureDate,
@@ -76,13 +76,13 @@ export class Login2faRequiredResponseDto extends SuccessResponseDto {
 // ****************************** finishRegistration ******************************
 export class FinishRegistrationBodyDto {
   @PropertyDto({
-    type: Role,
+    type: RoleCode,
     required: true,
     validated: true,
     structure: 'enum',
     example: 'Patient',
   })
-  role: Role;
+  role: RoleCode;
 
   @PropertyDto({
     type: String,

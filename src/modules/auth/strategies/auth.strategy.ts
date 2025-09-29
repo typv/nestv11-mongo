@@ -8,12 +8,16 @@ import { ServerException } from 'src/exceptions';
 import { JwtPayload, UserRequestPayload } from 'src/modules/auth/auth.interface';
 import { RedisService } from 'src/modules/base/redis';
 import { jwtConfiguration } from '../../../config';
+import { InjectModel } from '@nestjs/mongoose';
+import { User, UserDocument } from 'src/models';
+import mongoose, { Model } from 'mongoose';
 
 @Injectable()
 export class AuthStrategy extends PassportStrategy(Strategy) {
   constructor(
     private redisService: RedisService,
     @Inject(jwtConfiguration.KEY) private jwtConfig: ConfigType<typeof jwtConfiguration>,
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -32,16 +36,9 @@ export class AuthStrategy extends PassportStrategy(Strategy) {
     const isTokenValid = await this.redisService.getValue<string>(userTokenKey);
     if (!isTokenValid) throw new ServerException(ERROR_RESPONSE.UNAUTHORIZED);
 
-    // const user = await this.userRepo.findOneBy({ id });
-    const user = {
-      id,
-      email,
-      jti,
-      role,
-      emailVerified: true,
-      userType: UserType.SelfEmployed,
-      isActive: true,
-    };
+    const user: UserDocument = await this.userModel.findOne({
+      _id: new mongoose.Types.ObjectId(id),
+    });
     if (!user) throw new ServerException(ERROR_RESPONSE.USER_NOT_FOUND);
     if (!user.isActive) throw new ServerException(ERROR_RESPONSE.USER_DEACTIVATED);
 
@@ -51,7 +48,6 @@ export class AuthStrategy extends PassportStrategy(Strategy) {
       jti,
       role,
       emailVerified: user.emailVerified,
-      userType: user.userType,
     };
   }
 }
