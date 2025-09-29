@@ -1,10 +1,10 @@
 import { applyDecorators } from '@nestjs/common';
-import { Role, UserType } from 'src/common/enums';
+import { RoleCode, UserType } from 'src/common/enums';
 import { RoleBaseAccessControl } from './rbac.decorator';
 import { AllowUserTypes } from './user-type.decorator';
 
 export function AccessControl(
-  roles: Role[],
+  roles: RoleCode[],
   userTypes?: UserType[],
 ) {
   const decorators = [

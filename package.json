@@ -28,9 +28,9 @@
     "seed:config": "ts-node ./node_modules/typeorm-seeding/dist/cli.js src/config -r ormconfig.ts",
     "seed:run": "ts-node ./node_modules/typeorm-seeding/dist/cli.js seed -r ormconfig.ts",
     "seed:runOne": "ts-node ./node_modules/typeorm-seeding/dist/cli.js seed -r ormconfig.ts -s",
-    "template:install": "yarn workspace @repo/email-templates install",
-    "template:dev": "yarn workspace @repo/email-templates dev",
-    "template:build": "yarn workspace @repo/email-templates build",
+    "template:install": "pnpm workspace @repo/email-templates install",
+    "template:dev": "pnpm workspace @repo/email-templates dev",
+    "template:build": "pnpm workspace @repo/email-templates build",
     "gen:admin": "ts-node src/commands/create-admin.command.ts",
     "command:run": "node dist/src/cli"
   },

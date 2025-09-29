@@ -1,8 +1,12 @@
 import chalk from 'chalk';
 import { Command, CommandRunner, InquirerService, Option } from 'nest-commander';
-import { Role } from 'src/common/enums';
 import { commandConstants, questionConstants } from './command.constant';
 import { HashUtil } from '../common/utilities/hash.util';
+import { InjectModel } from '@nestjs/mongoose';
+import { User, UserDocument } from 'src/models';
+import { Model } from 'mongoose';
+import { Role, RoleDocument } from 'src/models/role.model';
+import { RoleCode } from 'src/common/enums';
 
 @Command({
   name: commandConstants.createAdmin,
@@ -10,7 +14,11 @@ import { HashUtil } from '../common/utilities/hash.util';
   arguments: '[email] [password]',
 })
 export class CreateAdminCommand extends CommandRunner {
-  constructor(private readonly inquirer: InquirerService) {
+  constructor(
+    private readonly inquirer: InquirerService,
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @InjectModel(Role.name) private roleModel: Model<RoleDocument>,
+  ) {
     super();
   }
 
@@ -22,19 +30,17 @@ export class CreateAdminCommand extends CommandRunner {
     const email = answers.email.trim();
     const pass = answers.password.trim();
 
-    // TODO
-    /*const adminRole = await this.roleRepo.findOneBy({ code: Roles.ADMIN });
+    const adminRole = await this.roleModel.findOne({ code: RoleCode.Admin });
     if (!adminRole) {
-      console.lo
-      g(chalk.green('CreateAdminCommand Error: Admin role not found.'));
+      console.log(chalk.green('CreateAdminCommand Error: Admin role not found.'));
       throw new Error();
-    }*/
+    }
 
-    // const hasAccount = await this.userRepo.findOneBy({ email: email });
-    // if (hasAccount) {
-    //   console.log(chalk.red('CreateAdminCommand Error: Email already exist.'));
-    //   return;
-    // }
+    const hasAccount = await this.userModel.findOne({ email: email });
+    if (hasAccount) {
+      console.log(chalk.red('CreateAdminCommand Error: Email already exist.'));
+      return;
+    }
 
     // Password hashing
     const passwordHash = await HashUtil.hashData(pass);
@@ -44,12 +50,12 @@ export class CreateAdminCommand extends CommandRunner {
         password: passwordHash,
         isActive: true,
         emailVerified: true,
-        role: Role.Admin,
+        role: adminRole._id,
       };
-      // await this.userRepo.save(filterData);
+      await this.userModel.create(filterData);
       console.log(chalk.green('Create admin successfully.'));
     } catch (err) {
-      console.log(chalk.green('CreateAdminCommand Error: '), err);
+      console.log(chalk.red('CreateAdminCommand Error: '), err);
     }
   }
 
