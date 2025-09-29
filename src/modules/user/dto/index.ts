@@ -1,6 +1,6 @@
 import { OmitType } from '@nestjs/swagger';
 import { SuccessResponseDto } from 'src/common/dto/success-response.dto';
-import { Gender, Role, UserType } from 'src/common/enums';
+import { Gender, RoleCode, UserType } from 'src/common/enums';
 import {
   IsLettersAndSpaces,
   IsNotFutureDate,
@@ -30,7 +30,7 @@ export class GetMyInformationResponseDto {
   emailVerified: boolean;
 
   @PropertyDto()
-  role: Role;
+  role: RoleCode;
 }
 
 // ****************************** GetUserInformation ******************************

@@ -41,3 +41,5 @@ e2e:
 	docker-compose exec node pnpm test:e2e
 genModule:
 	npx @nestjs/cli g res $(n)
+commandRun:
+	docker-compose exec node pnpm command:run $(c)

@@ -7,3 +7,4 @@ export {
   WorkbookVersionDocument,
   WorkbookVersionSchema,
 } from './workbook-version.model';
+export * from './role.model';
