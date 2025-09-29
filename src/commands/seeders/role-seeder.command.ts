@@ -36,7 +36,7 @@ export class RoleSeederCommand extends CommandRunner {
 
       console.log(chalk.green('Create roles successfully.'));
     } catch (err) {
-      console.log(chalk.red('CreateRolesCommand Error: '), err);
+      console.log(chalk.red('RoleSeederCommand Error: '), err);
     }
   }
 

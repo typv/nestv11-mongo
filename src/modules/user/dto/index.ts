@@ -8,9 +8,26 @@ import {
   PropertyDto,
 } from 'src/decorators';
 import { DeleteConstraintReasonType } from '../user.enum';
+import { Transform, Type } from 'class-transformer';
 
 // ****************************** GetMyInformation ******************************
+export class RoleResponseDto {
+  @PropertyDto()
+  @Transform(({ value }) => value.toString())
+  id: string;
+
+  @PropertyDto()
+  code: string;
+
+  @PropertyDto()
+  name: string;
+
+  @PropertyDto()
+  permissions: string[];
+}
+
 export class GetMyInformationResponseDto {
+  @Transform(({ value }) => value.toString())
   @PropertyDto()
   id: string;
 
@@ -29,8 +46,11 @@ export class GetMyInformationResponseDto {
   @PropertyDto()
   emailVerified: boolean;
 
-  @PropertyDto()
-  role: RoleCode;
+  @PropertyDto({
+    type: RoleResponseDto,
+    structure: 'dto',
+  })
+  role: RoleResponseDto;
 }
 
 // ****************************** GetUserInformation ******************************

@@ -2,6 +2,7 @@ import chalk from 'chalk';
 import { Command, CommandRunner, Option } from 'nest-commander';
 import { commandConstants } from '../command.constant';
 import { RoleSeederCommand } from 'src/commands/seeders/role-seeder.command';
+import { PermissionSeederCommand } from 'src/commands/seeders/permission-seeder.command';
 
 @Command({
   name: commandConstants.seedAll,
@@ -11,6 +12,7 @@ import { RoleSeederCommand } from 'src/commands/seeders/role-seeder.command';
 export class AllSeederCommand extends CommandRunner {
   constructor(
     private readonly roleSeeder: RoleSeederCommand,
+    private readonly PermissionSeeder: PermissionSeederCommand,
   ) {
     super();
   }
@@ -23,6 +25,10 @@ export class AllSeederCommand extends CommandRunner {
     try {
       console.log(chalk.blue('\nRunning Role Seeder...'));
       await this.roleSeeder.run();
+
+      console.log(chalk.blue('\nRunning Permission Seeder...'));
+      await this.PermissionSeeder.run();
+
     } catch (error) {
       console.error(chalk.bold.red('\n❌ SEEDING FAILED! Stopping process.'));
       console.error(chalk.red(error.message));

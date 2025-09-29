@@ -54,7 +54,9 @@ export class UserService extends BaseService {
 
   async getMyInformation(id: string) {
     const _id = new mongoose.Types.ObjectId(id);
-    const user = await this.userModel.findById(_id).exec();
+    const user = await this.userModel.findById(_id)
+      .populate('role')
+      .exec();
     if (!user) {
       throw new ServerException(ERROR_RESPONSE.USER_NOT_FOUND);
     }

@@ -8,3 +8,4 @@ export {
   WorkbookVersionSchema,
 } from './workbook-version.model';
 export * from './role.model';
+export * from './permission.model';
