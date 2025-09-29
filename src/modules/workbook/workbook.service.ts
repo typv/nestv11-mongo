@@ -171,7 +171,7 @@ export class WorkbookService extends BaseService {
       }
     });
 
-    if (statuses.length) {
+    if (statuses?.length) {
       pipeline.push({
         $match: {
           'w.approvedStatus': { $in: statuses }
@@ -182,6 +182,7 @@ export class WorkbookService extends BaseService {
     pipeline.push({
       $project: {
         _id: { $toString: '$_id' },
+        univerWorkbookId: '$w.univerWorkbookId',
         originalName: '$w.name',
         versionName: '$name',
         version: 1,
