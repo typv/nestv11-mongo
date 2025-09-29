@@ -23,7 +23,7 @@ import {
   VerifyResetPasswordLinkResponseDto,
 } from './dto';
 import { ERROR_RESPONSE } from '../../common/constants';
-import { AccountAction, JwtTokenType } from '../../common/enums';
+import { AccountAction, JwtTokenType, UserType } from '../../common/enums';
 import { HashUtil } from '../../common/utilities';
 import { getTtlValue } from '../../common/utilities/time.util';
 import { User, UserDocument } from '../../models';
@@ -74,6 +74,7 @@ export class AuthService {
       isActive: true,
       emailVerified: false,
       password: hashedPassword,
+      userType: UserType.User
     };
     const newUser = await this.userModel.create(userData);
 

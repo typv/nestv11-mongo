@@ -6,7 +6,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { User, UserDocument } from 'src/models';
 import { Model } from 'mongoose';
 import { Role, RoleDocument } from 'src/models/role.model';
-import { RoleCode } from 'src/common/enums';
+import { RoleCode, UserType } from 'src/common/enums';
 
 @Command({
   name: commandConstants.createAdmin,
@@ -51,6 +51,7 @@ export class CreateAdminCommand extends CommandRunner {
         isActive: true,
         emailVerified: true,
         role: adminRole._id,
+        userType: UserType.Admin,
       };
       await this.userModel.create(filterData);
       console.log(chalk.green('Create admin successfully.'));
