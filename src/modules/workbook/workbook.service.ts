@@ -98,6 +98,8 @@ export class WorkbookService extends BaseService {
             version,
             role: roleDoc._id,
             status: WorkbookVersionStatus.AWAITING_APPROVAL,
+            submittedBy: new Types.ObjectId(userId),
+            submittedAt: new Date(),
           },
         ],
         { session },

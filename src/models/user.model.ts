@@ -19,6 +19,9 @@ export class User {
   @Prop()
   lastName?: string;
 
+  @Prop()
+  fullName?: string;
+
   @Prop({ required: true })
   password: string;
 

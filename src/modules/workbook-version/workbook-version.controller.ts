@@ -1,17 +1,16 @@
-import { Body, Controller, HttpStatus, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpStatus, Param, Patch, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { FormDataRequest } from 'nestjs-form-data';
 import {
   CreateWorkbookSubVersionDto,
   ReviewWorkbookSubVersionDto,
   SubmitVersionDto,
-  UpdateWorkbookSubVersionDto,
+  UpdateWorkbookSubVersionDto, WorkbookVersionsResponseDto,
 } from './dto';
 import { WorkbookVersionService } from './workbook-version.service';
 import { SuccessResponseDto } from '../../common/dto/success-response.dto';
 import { RoleCode } from '../../common/enums';
 import { RoleBaseAccessControl, SwaggerApiDocument, User } from '../../decorators';
-
 @Controller('workbook-version')
 @ApiTags('Workbook Version')
 @ApiBearerAuth()
@@ -113,5 +112,25 @@ export class WorkbookVersionController {
     @Body() body: ReviewWorkbookSubVersionDto,
   ): Promise<SuccessResponseDto> {
     return this.workbookVersionService.reviewWorkbookSubVersion(userId, role, body);
+  }
+
+  @Get(':workbookId/list')
+  @SwaggerApiDocument({
+    response: {
+      status: HttpStatus.OK,
+      type: WorkbookVersionsResponseDto,
+      isPagination: true,
+    },
+    operation: {
+      operationId: 'workbookList',
+      summary: 'Api workbookList',
+      description: 'Workbook List',
+    },
+  })
+  versionList(
+    @User('id') userId: string,
+    @Param('workbookId') workbookId: string,
+  ): Promise<WorkbookVersionsResponseDto[]> {
+    return this.workbookVersionService.versionList(userId, workbookId);
   }
 }
