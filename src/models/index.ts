@@ -9,3 +9,4 @@ export {
 } from './workbook-version.model';
 export * from './role.model';
 export * from './permission.model';
+export * from './workbook-sub-version.model';

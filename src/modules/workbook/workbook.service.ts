@@ -1,12 +1,21 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
+import { IWorkbookData, IWorksheetData } from '@univerjs/core';
 import { ClientSession, Connection, Model, Types } from 'mongoose';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
+import { Readable } from 'node:stream';
+import { PaginationResponseDto } from 'src/common/dto';
+import { JsonStreamUtil } from 'src/common/utilities/json-stream.util';
 import { Logger } from 'winston';
+import { FindWorkbookListDto, ImportWorkbookDto, WorkbookListResponseDto } from './dto';
 import { ERROR_RESPONSE } from '../../common/constants';
 import { SuccessResponseDto } from '../../common/dto/success-response.dto';
+import { RoleCode } from '../../common/enums';
+import { WorkbookVersionStatus } from '../../common/enums/workbook.enum';
 import { ServerException } from '../../exceptions';
 import {
+  Role,
+  RoleDocument,
   Workbook,
   WorkbookDocument,
   WorkbookVersion,
@@ -15,17 +24,6 @@ import {
   WorksheetDocument,
 } from '../../models';
 import { BaseService } from '../base.service';
-import { FindWorkbookListDto, ImportWorkbookDto, WorkbookListResponseDto } from './dto';
-import { JsonStreamUtil } from 'src/common/utilities/json-stream.util';
-import {
-  CustomData,
-  IStyleData,
-  IWorkbookData,
-  IWorksheetData,
-  Nullable,
-} from '@univerjs/core';
-import { Readable } from 'node:stream';
-import { PaginationResponseDto } from 'src/common/dto';
 
 @Injectable()
 export class WorkbookService extends BaseService {
@@ -35,7 +33,8 @@ export class WorkbookService extends BaseService {
     @InjectModel(Worksheet.name) private worksheetModel: Model<WorksheetDocument>,
     @InjectModel(WorkbookVersion.name)
     private workbookVersionModel: Model<WorkbookVersionDocument>,
-    @InjectConnection() private readonly connection: Connection
+    @InjectConnection() private readonly connection: Connection,
+    @InjectModel(Role.name) private roleModel: Model<RoleDocument>,
   ) {
     super();
     this.logger = this.logger.child({ context: WorkbookService.name });
@@ -43,15 +42,31 @@ export class WorkbookService extends BaseService {
 
   async importWorkbook(
     userId: string,
+    role: RoleCode,
     body: ImportWorkbookDto,
   ): Promise<SuccessResponseDto> {
     const { file } = body;
     const jsonStream: Readable = Readable.from(file.buffer);
     let workbookData: IWorkbookData;
     try {
-      workbookData = await JsonStreamUtil.processJsonStreamSimple<IWorkbookData>(jsonStream);
+      workbookData =
+        await JsonStreamUtil.processJsonStreamSimple<IWorkbookData>(jsonStream);
     } catch (e) {
-      throw new ServerException(ERROR_RESPONSE.INVALID_OBJECT('json'))
+      throw new ServerException(ERROR_RESPONSE.INVALID_OBJECT('json'));
+    }
+
+    const existingWorkbook = await this.workbookModel.findOne({
+      univerWorkbookId: workbookData.id,
+    });
+    if (existingWorkbook) {
+      throw new ServerException(ERROR_RESPONSE.WORKBOOK_ALREADY_EXISTED);
+    }
+    const roleDoc = await this.roleModel.findOne({ code: role });
+    if (!roleDoc) {
+      throw new ServerException({
+        ...ERROR_RESPONSE.RESOURCE_NOT_FOUND,
+        message: 'Role not found',
+      });
     }
 
     const { sheets } = workbookData;
@@ -75,11 +90,18 @@ export class WorkbookService extends BaseService {
       );
       // Create workbook version
       const version = await this.getNextWorkbookVersion(workbook._id, session);
-      const [workbookVersion] = await this.workbookVersionModel.create([{
-        ...workbookData,
-        workbook: workbook._id,
-        version,
-      }], { session });
+      const [workbookVersion] = await this.workbookVersionModel.create(
+        [
+          {
+            ...workbookData,
+            workbook: workbook._id,
+            version,
+            role: roleDoc._id,
+            status: WorkbookVersionStatus.AWAITING_APPROVAL,
+          },
+        ],
+        { session },
+      );
       // Create worksheets
       const worksheetsDocs = sheetsData.map((sheet: IWorksheetData) => {
         return {
@@ -89,12 +111,14 @@ export class WorkbookService extends BaseService {
           workbookVersion: workbookVersion._id,
         };
       });
-      const newWorksheets = await this.worksheetModel.insertMany(worksheetsDocs, { session });
+      const newWorksheets = await this.worksheetModel.insertMany(worksheetsDocs, {
+        session,
+      });
       // Link worksheets to workbook version
       await this.workbookVersionModel.updateOne(
         { _id: workbookVersion._id },
         { $set: { sheets: newWorksheets.map((worksheet) => worksheet._id) } },
-        { session }
+        { session },
       );
       await session.commitTransaction();
 

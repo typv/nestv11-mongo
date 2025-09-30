@@ -254,10 +254,12 @@ export class AuthService {
 
   private async manageUserToken(user: User) {
     const jti = uuidv4();
+    const role = await this.roleModel.findOne({ _id: user.role });
     const tokenPayload = {
       id: user._id.toString(),
       jti,
       email: user.email,
+      role: role?.code,
     };
 
     const [accessToken, refreshToken] = await Promise.all([
