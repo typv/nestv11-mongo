@@ -11,7 +11,6 @@ import { FindWorkbookListDto, ImportWorkbookDto, WorkbookListResponseDto } from 
 import { ERROR_RESPONSE } from '../../common/constants';
 import { SuccessResponseDto } from '../../common/dto/success-response.dto';
 import { RoleCode } from '../../common/enums';
-import { WorkbookVersionStatus } from '../../common/enums/workbook.enum';
 import { ServerException } from '../../exceptions';
 import {
   Role,
@@ -24,6 +23,7 @@ import {
   WorksheetDocument,
 } from '../../models';
 import { BaseService } from '../base.service';
+import { WorkbookVersionStatus } from 'src/modules/workbook/workbook.enum';
 
 @Injectable()
 export class WorkbookService extends BaseService {
@@ -97,7 +97,7 @@ export class WorkbookService extends BaseService {
             workbook: workbook._id,
             version,
             role: roleDoc._id,
-            status: WorkbookVersionStatus.AWAITING_APPROVAL,
+            status: WorkbookVersionStatus.Awaiting,
             submittedBy: new Types.ObjectId(userId),
             submittedAt: new Date(),
           },

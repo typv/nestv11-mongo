@@ -14,7 +14,7 @@ import {
   WorkbookVersionSchema,
   Worksheet,
   WorksheetSchema,
-} from '../../models';
+} from '../../../models';
 
 @Module({
   imports: [

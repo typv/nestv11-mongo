@@ -1,5 +1,5 @@
 import { PropertyDto } from 'src/decorators';
-import { WorkbookVersionStatus } from 'src/common/enums/workbook.enum';
+import { WorkbookVersionStatus } from 'src/modules/workbook/workbook.enum';
 
 export class WorkbookVersionsResponseDto {
   @PropertyDto()

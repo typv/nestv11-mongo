@@ -1,8 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
-import { WorkbookApprovedStatus } from 'src/modules/workbook/workbook.enum';
+import { WorkbookApprovedStatus, WorkbookPermission, WorkbookStage } from 'src/modules/workbook/workbook.enum';
 import { User } from './user.model';
-import { WorkbookPermission, WorkbookStage } from '../common/enums/workbook.enum';
 
 @Schema({ _id: false })
 export class Collaborator {

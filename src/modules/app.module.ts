@@ -27,7 +27,6 @@ import { UploadModule } from 'src/modules/upload';
 import { UserModule } from 'src/modules/user';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { WorkbookVersionModule } from './workbook-version/workbook-version.module';
 import { WorkbookModule } from './workbook/workbook.module';
 import { RoleModule } from 'src/modules/role/role.module';
 
@@ -77,7 +76,6 @@ import { RoleModule } from 'src/modules/role/role.module';
     UploadModule,
     WorkbookModule,
     RoleModule,
-    WorkbookVersionModule,
   ],
   controllers: [AppController],
   providers: [

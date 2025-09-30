@@ -5,8 +5,8 @@ import { Role } from './role.model';
 import { User } from './user.model';
 import { Workbook } from './workbook.model';
 import { Worksheet } from './worksheet.model';
-import { WorkbookPermission, WorkbookVersionStatus } from '../common/enums/workbook.enum';
 import { LocaleType } from '../modules/workbook/dto';
+import { WorkbookPermission, WorkbookVersionStatus } from 'src/modules/workbook/workbook.enum';
 
 @Schema({ _id: false })
 export class Collaborator {
@@ -65,7 +65,7 @@ export class WorkbookVersion {
     type: Number,
     enum: WorkbookVersionStatus,
     required: true,
-    default: WorkbookVersionStatus.AWAITING_APPROVAL,
+    default: WorkbookVersionStatus.Awaiting,
   })
   status: WorkbookVersionStatus;
 
