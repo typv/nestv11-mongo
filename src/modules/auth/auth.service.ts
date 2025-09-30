@@ -80,7 +80,7 @@ export class AuthService {
       emailVerified: false,
       password: hashedPassword,
       userType: UserType.User,
-      role: roleId
+      role: role._id,
     };
     const newUser = await this.userModel.create(userData);
 
