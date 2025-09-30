@@ -8,10 +8,10 @@ import {
   UpdateWorkbookSubVersionDto, WorkbookVersionsResponseDto,
 } from './dto';
 import { WorkbookVersionService } from './workbook-version.service';
-import { SuccessResponseDto } from '../../common/dto/success-response.dto';
-import { RoleCode } from '../../common/enums';
-import { RoleBaseAccessControl, SwaggerApiDocument, User } from '../../decorators';
-@Controller('workbook-version')
+import { SuccessResponseDto } from '../../../common/dto/success-response.dto';
+import { RoleCode } from '../../../common/enums';
+import { RoleBaseAccessControl, SwaggerApiDocument, User } from '../../../decorators';
+@Controller('workbook/version')
 @ApiTags('Workbook Version')
 @ApiBearerAuth()
 @RoleBaseAccessControl(RoleCode.IMA, RoleCode.IMS, RoleCode.PMA, RoleCode.PMS)

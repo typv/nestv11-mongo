@@ -11,17 +11,11 @@ import {
   SubmitVersionDto,
   UpdateWorkbookSubVersionDto, WorkbookVersionsResponseDto,
 } from './dto';
-import { ERROR_RESPONSE } from '../../common/constants';
-import { SuccessResponseDto } from '../../common/dto/success-response.dto';
-import { RoleCode } from '../../common/enums';
-import {
-  WorkbookStage,
-  WorkbookSubVersionStatus,
-  WorkbookTeam,
-  WorkbookVersionStatus,
-} from '../../common/enums/workbook.enum';
-import { JsonStreamUtil } from '../../common/utilities/json-stream.util';
-import { ServerException } from '../../exceptions';
+import { ERROR_RESPONSE } from '../../../common/constants';
+import { SuccessResponseDto } from '../../../common/dto/success-response.dto';
+import { RoleCode } from '../../../common/enums';
+import { JsonStreamUtil } from '../../../common/utilities/json-stream.util';
+import { ServerException } from '../../../exceptions';
 import {
   Role,
   RoleDocument,
@@ -33,9 +27,14 @@ import {
   WorkbookVersionDocument,
   Worksheet,
   WorksheetDocument,
-} from '../../models';
-import { BaseService } from '../base.service';
-import { WorkbookApprovedStatus } from '../workbook/workbook.enum';
+} from '../../../models';
+import { BaseService } from '../../base.service';
+import {
+  WorkbookApprovedStatus,
+  WorkbookStage,
+  WorkbookSubVersionStatus,
+  WorkbookVersionStatus
+} from '../workbook.enum';
 import { plainToInstance } from 'class-transformer';
 
 @Injectable()
@@ -482,7 +481,7 @@ export class WorkbookVersionService extends BaseService {
         { version: currentWorkbookVersion.version - 1, workbook: workbook._id },
         {
           $set: {
-            status: WorkbookVersionStatus.APPROVED,
+            status: WorkbookVersionStatus.Approved,
           },
         },
         { session },
@@ -599,21 +598,6 @@ export class WorkbookVersionService extends BaseService {
     const major = Number.parseInt(majorStr || '0', 10);
     const minor = Number.parseInt(minorStr || '0', 10);
     return `${major}.${minor + 1}`;
-  }
-
-  private mappingWorkbookTeamToVersion(team: WorkbookTeam): number {
-    switch (team) {
-      case WorkbookTeam.IMA:
-        return 1;
-      case WorkbookTeam.IMS:
-        return 2;
-      case WorkbookTeam.PMA:
-        return 3;
-      case WorkbookTeam.PMS:
-        return 0;
-      default:
-        return 1;
-    }
   }
 
   private isValidStageByRole(role: RoleCode, stage: WorkbookStage): boolean {
@@ -765,8 +749,8 @@ export class WorkbookVersionService extends BaseService {
           workbook: workbook._id,
           status:
             role.code !== RoleCode.PMS
-              ? WorkbookVersionStatus.AWAITING_APPROVAL
-              : WorkbookVersionStatus.APPROVED,
+              ? WorkbookVersionStatus.Awaiting
+              : WorkbookVersionStatus.Approved,
           role: role._id,
         },
         $set: {
@@ -817,7 +801,7 @@ export class WorkbookVersionService extends BaseService {
         {
           $set: {
             isCurrentActive: false,
-            status: WorkbookVersionStatus.APPROVED,
+            status: WorkbookVersionStatus.Approved,
           },
         },
         { session },
@@ -845,7 +829,7 @@ export class WorkbookVersionService extends BaseService {
       { version: currentWorkbookVersion.version - 1, workbook: workbook._id },
       {
         $set: {
-          status: WorkbookVersionStatus.APPROVED,
+          status: WorkbookVersionStatus.Approved,
         },
       },
       { session },

@@ -4,7 +4,7 @@ import { HydratedDocument, Schema as MongooseSchema, Types } from 'mongoose';
 import { User } from './user.model';
 import { WorkbookVersion } from './workbook-version.model';
 import { Workbook } from './workbook.model';
-import { WorkbookSubVersionStatus } from '../common/enums/workbook.enum';
+import { WorkbookSubVersionStatus } from 'src/modules/workbook/workbook.enum';
 
 export type WorkbookSubVersionDocument = HydratedDocument<WorkbookSubVersion>;
 

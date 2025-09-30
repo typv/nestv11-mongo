@@ -1,3 +1,3 @@
-import { ImportWorkbookDto } from '../../../workbook/dto';
+import { ImportWorkbookDto } from '../../../dto';
 
 export class SubmitVersionDto extends ImportWorkbookDto {}

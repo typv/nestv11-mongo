@@ -13,6 +13,7 @@ import {
   Worksheet,
   WorksheetSchema,
 } from '../../models';
+import { WorkbookVersionModule } from 'src/modules/workbook/workbook-version/workbook-version.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import {
       { name: Role.name, schema: RoleSchema },
     ]),
     NestjsFormDataModule,
+    WorkbookVersionModule,
   ],
   controllers: [WorkbookController],
   providers: [WorkbookService],

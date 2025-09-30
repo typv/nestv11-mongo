@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { WorkbookSubVersionStatus } from '../../../../common/enums/workbook.enum';
+import { WorkbookSubVersionStatus } from 'src/modules/workbook/workbook.enum';
 
 export class ReviewWorkbookSubVersionDto {
   @IsString()
