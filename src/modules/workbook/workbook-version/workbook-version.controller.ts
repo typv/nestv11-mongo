@@ -70,7 +70,7 @@ export class WorkbookVersionController {
     );
   }
 
-  @Post(':workbookVersionId/submit-workbook-version')
+  @Post(':workbookVersionId/submit')
   @FormDataRequest()
   @SwaggerApiDocument({
     response: {
