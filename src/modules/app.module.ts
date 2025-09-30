@@ -86,10 +86,11 @@ import { RoleModule } from 'src/modules/role/role.module';
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
     },
-    {
+    // TODO: temporary disable RBAC guard
+    /*{
       provide: APP_GUARD,
       useClass: RoleBasedAccessControlGuard,
-    },
+    },*/
     {
       provide: APP_FILTER,
       useClass: AllExceptionFilter,
