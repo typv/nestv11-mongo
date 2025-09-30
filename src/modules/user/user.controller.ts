@@ -121,7 +121,7 @@ export class UserController {
     return this.userService.deleteAccount(userId);
   }
 
-  @Get('users')
+  @Get()
   @SwaggerApiDocument({
     response: {
       status: HttpStatus.OK,

@@ -5,15 +5,15 @@ import {
   IsLettersAndSpaces,
   IsNotFutureDate,
   IsValidPhoneNumber,
+  ObjectIdToIdString,
   PropertyDto,
 } from 'src/decorators';
 import { DeleteConstraintReasonType } from '../user.enum';
-import { Transform, Type } from 'class-transformer';
 
 // ****************************** GetMyInformation ******************************
 export class RoleResponseDto {
   @PropertyDto()
-  @Transform(({ value }) => value.toString())
+  @ObjectIdToIdString()
   id: string;
 
   @PropertyDto()
@@ -27,7 +27,7 @@ export class RoleResponseDto {
 }
 
 export class GetMyInformationResponseDto {
-  @Transform(({ value }) => value.toString())
+  @ObjectIdToIdString()
   @PropertyDto()
   id: string;
 
@@ -54,9 +54,26 @@ export class GetMyInformationResponseDto {
 }
 
 // ****************************** GetUserInformation ******************************
-export class GetUserInformationResponseDto extends OmitType(GetMyInformationResponseDto, [
-  'emailVerified',
-]) {}
+export class GetUserInformationResponseDto {
+  @PropertyDto()
+  @ObjectIdToIdString()
+  id: string;
+
+  @PropertyDto()
+  email: string;
+
+  @PropertyDto()
+  userType: string;
+
+  @PropertyDto()
+  isActive: boolean;
+
+  @PropertyDto()
+  role: string;
+
+  @PropertyDto()
+  createdAt: string;
+}
 
 export class SetUserTypeBodyDto {
   @PropertyDto({

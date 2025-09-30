@@ -105,10 +105,16 @@ export class UserService extends BaseService {
   }
 
   async listUsers(): Promise<GetUserInformationResponseDto[]> {
-    const users = await this.userModel.find().exec();
+    const users = await this.userModel.find()
+      .populate('role')
+      .lean()
+      .exec();
 
     return users.map((user) =>
-      plainToInstance(GetUserInformationResponseDto, user, {
+      plainToInstance(GetUserInformationResponseDto,{
+        ...user,
+        role: user.role ? (user.role as any).name : null,
+      }, {
         excludeExtraneousValues: true,
       }),
     );

@@ -33,8 +33,8 @@ export class WorkbookVersion {
   @Prop({ type: String, required: true })
   name: string;
 
-  @Prop({ type: String, required: true })
-  appVersion: string;
+  @Prop({ type: String, required: false })
+  appVersion?: string;
 
   @Prop({ type: String, enum: LocaleType, required: true })
   locale: LocaleType;
