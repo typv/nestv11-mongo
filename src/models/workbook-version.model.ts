@@ -62,7 +62,7 @@ export class WorkbookVersion {
   workbook: Workbook;
 
   @Prop({
-    type: Number,
+    type: String,
     enum: WorkbookVersionStatus,
     required: true,
     default: WorkbookVersionStatus.Awaiting,
