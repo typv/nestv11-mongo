@@ -71,6 +71,12 @@ export class WorkbookVersion {
 
   @Prop({ type: Types.ObjectId, ref: 'Role', required: true })
   role: Role;
+
+  @Prop({ type: Types.ObjectId, ref: 'User', required: false })
+  submittedBy?: User;
+
+  @Prop({ type: Date, required: false })
+  submittedAt?: Date;
 }
 
 export const WorkbookVersionSchema = SchemaFactory.createForClass(WorkbookVersion);

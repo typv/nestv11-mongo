@@ -9,7 +9,7 @@ import {
   CreateWorkbookSubVersionDto,
   ReviewWorkbookSubVersionDto,
   SubmitVersionDto,
-  UpdateWorkbookSubVersionDto,
+  UpdateWorkbookSubVersionDto, WorkbookVersionsResponseDto,
 } from './dto';
 import { ERROR_RESPONSE } from '../../common/constants';
 import { SuccessResponseDto } from '../../common/dto/success-response.dto';
@@ -36,6 +36,7 @@ import {
 } from '../../models';
 import { BaseService } from '../base.service';
 import { WorkbookApprovedStatus } from '../workbook/workbook.enum';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class WorkbookVersionService extends BaseService {
@@ -878,5 +879,56 @@ export class WorkbookVersionService extends BaseService {
       },
       { session },
     );
+  }
+
+  async versionList(userId: string, workbookId: string): Promise<WorkbookVersionsResponseDto[]> {
+    const workbook = await this.workbookModel.findOne({
+      _id: new Types.ObjectId(workbookId),
+    });
+    if (!workbook) {
+      throw new ServerException(ERROR_RESPONSE.OBJECT_NOT_FOUND('Workbook'));
+    }
+    const versions = <Partial<WorkbookVersionDocument>[]>(
+      await this.workbookVersionModel
+        .aggregate([
+          { $match: { workbook: workbook._id } },
+          {
+            $lookup: {
+              from: 'roles',
+              localField: 'role',
+              foreignField: '_id',
+              as: 'role',
+            },
+          },
+          { $unwind: '$role' },
+          {
+            $lookup: {
+              from: 'users',
+              localField: 'submittedBy',
+              foreignField: '_id',
+              as: 'submittedBy',
+            },
+          },
+          { $unwind: '$submittedBy' },
+          {
+            $project: {
+              _id: 0,
+              id: { $toString: '$_id' },
+              versionName: '$name',
+              version: 1,
+              status: 1,
+              isCurrentActive: 1,
+              createdAt: 1,
+              updatedAt: 1,
+              submittedBy: '$submittedBy.email',
+              submittedAt: 1,
+            },
+          },
+          { $sort: { version: -1 } },
+        ])
+        .exec()
+    );
+
+    return plainToInstance(WorkbookVersionsResponseDto, versions, { excludeExtraneousValues: true } );
   }
 }
