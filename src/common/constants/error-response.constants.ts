@@ -276,4 +276,24 @@ export const ERROR_RESPONSE = {
     errorCode: 'sheet_orders_do_not_match_the_sheet_ids',
     message: 'Sheet orders do not match the sheet ids',
   },
+  INVALID_STAGE: {
+    statusCode: HttpStatus.BAD_REQUEST,
+    errorCode: 'invalid_stage',
+    message: 'Invalid stage',
+  },
+  INVALID_REVIEWER_ROLE: {
+    statusCode: HttpStatus.BAD_REQUEST,
+    errorCode: 'invalid_reviewer_role',
+    message: 'Invalid reviewer role',
+  },
+  WORKBOOK_VERSION_NOT_CURRENT_ACTIVE: {
+    statusCode: HttpStatus.BAD_REQUEST,
+    errorCode: 'workbook_version_not_current_active',
+    message: 'Workbook version is not current active',
+  },
+  UNAPPROVED_WORKBOOK_SUB_VERSIONS: {
+    statusCode: HttpStatus.BAD_REQUEST,
+    errorCode: 'unapproved_workbook_sub_versions',
+    message: 'There are unapproved workbook sub versions',
+  },
 };

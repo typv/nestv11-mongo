@@ -1,13 +1,15 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { NestjsFormDataModule } from 'nestjs-form-data';
-import { WorkbookController } from './workbook.controller';
-import { WorkbookService } from './workbook.service';
+import { WorkbookVersionController } from './workbook-version.controller';
+import { WorkbookVersionService } from './workbook-version.service';
 import {
   Role,
   RoleSchema,
   Workbook,
   WorkbookSchema,
+  WorkbookSubVersion,
+  WorkbookSubVersionSchema,
   WorkbookVersion,
   WorkbookVersionSchema,
   Worksheet,
@@ -20,12 +22,12 @@ import {
       { name: Workbook.name, schema: WorkbookSchema },
       { name: Worksheet.name, schema: WorksheetSchema },
       { name: WorkbookVersion.name, schema: WorkbookVersionSchema },
+      { name: WorkbookSubVersion.name, schema: WorkbookSubVersionSchema },
       { name: Role.name, schema: RoleSchema },
     ]),
     NestjsFormDataModule,
   ],
-  controllers: [WorkbookController],
-  providers: [WorkbookService],
-  exports: [WorkbookService],
+  controllers: [WorkbookVersionController],
+  providers: [WorkbookVersionService],
 })
-export class WorkbookModule {}
+export class WorkbookVersionModule {}

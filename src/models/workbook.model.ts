@@ -1,8 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
-import { User } from './user.model';
-import { WorkbookPermission } from '../common/enums/workbook.enum';
 import { WorkbookApprovedStatus } from 'src/modules/workbook/workbook.enum';
+import { User } from './user.model';
+import { WorkbookPermission, WorkbookStage } from '../common/enums/workbook.enum';
 
 @Schema({ _id: false })
 export class Collaborator {
@@ -37,7 +37,7 @@ export class Workbook {
     type: String,
     enum: Object.values(WorkbookApprovedStatus),
     required: true,
-    default: WorkbookApprovedStatus.InProgress
+    default: WorkbookApprovedStatus.InProgress,
   })
   approvedStatus: WorkbookApprovedStatus;
 
@@ -46,6 +46,14 @@ export class Workbook {
 
   @Prop({ type: [Collaborator], default: [] })
   collaborators: Collaborator[];
+
+  @Prop({
+    type: String,
+    enum: WorkbookStage,
+    required: true,
+    default: WorkbookStage.IMA_UPDATE_INPUTS,
+  })
+  currentStage: WorkbookStage;
 }
 
 export const WorkbookSchema = SchemaFactory.createForClass(Workbook);

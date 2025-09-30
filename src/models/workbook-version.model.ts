@@ -1,11 +1,12 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { IResources, IStyleData, Nullable, Workbook } from '@univerjs/core';
+import { IResources, IStyleData, Nullable } from '@univerjs/core';
 import { HydratedDocument, Schema as MongooseSchema, Types } from 'mongoose';
+import { Role } from './role.model';
 import { User } from './user.model';
+import { Workbook } from './workbook.model';
 import { Worksheet } from './worksheet.model';
-import { WorkbookPermission } from '../common/enums/workbook.enum';
+import { WorkbookPermission, WorkbookVersionStatus } from '../common/enums/workbook.enum';
 import { LocaleType } from '../modules/workbook/dto';
-import { WorkbookVersionStatus } from 'src/modules/workbook/workbook.enum';
 
 @Schema({ _id: false })
 export class Collaborator {
@@ -57,16 +58,19 @@ export class WorkbookVersion {
   @Prop({ type: [Types.ObjectId], ref: 'Worksheet', required: true })
   sheets: Worksheet[];
 
-  @Prop({ type: Types.ObjectId, ref: 'workbooks', required: true })
+  @Prop({ type: Types.ObjectId, ref: 'Workbook', required: true })
   workbook: Workbook;
 
   @Prop({
-    type: String,
-    enum: Object.values(WorkbookVersionStatus),
+    type: Number,
+    enum: WorkbookVersionStatus,
     required: true,
-    default: WorkbookVersionStatus.Awaiting
+    default: WorkbookVersionStatus.AWAITING_APPROVAL,
   })
   status: WorkbookVersionStatus;
+
+  @Prop({ type: Types.ObjectId, ref: 'Role', required: true })
+  role: Role;
 }
 
 export const WorkbookVersionSchema = SchemaFactory.createForClass(WorkbookVersion);
