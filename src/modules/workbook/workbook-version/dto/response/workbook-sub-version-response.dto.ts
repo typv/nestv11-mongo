@@ -26,10 +26,5 @@ export class SubVersionResponseDto {
   snapshotFileKey: string;
 
   @PropertyDto()
-  changeSet: Partial<IWorkbookData>;
-}
-
-export class SubVersionSnapshotDto {
-  @PropertyDto()
-  snapshotFileKey: string;
+  changeSet?: Partial<IWorkbookData>;
 }
