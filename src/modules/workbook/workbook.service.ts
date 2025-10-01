@@ -200,7 +200,7 @@ export class WorkbookService extends BaseService {
     pipeline.push({
       $project: {
         workbookId: { $toString: '$w._id' },
-        workBookVersionId: { $toString: '$_id' },
+        workbookVersionId: { $toString: '$_id' },
         univerWorkbookId: '$w.univerWorkbookId',
         originalName: '$w.name',
         versionName: '$name',
