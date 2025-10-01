@@ -9,7 +9,7 @@ import { JwtPayload, UserRequestPayload } from 'src/modules/auth/auth.interface'
 import { RedisService } from 'src/modules/base/redis';
 import { jwtConfiguration } from '../../../config';
 import { InjectModel } from '@nestjs/mongoose';
-import { User, UserDocument } from 'src/models';
+import { RoleDocument, User, UserDocument } from 'src/models';
 import mongoose, { Model } from 'mongoose';
 
 @Injectable()
@@ -38,15 +38,19 @@ export class AuthStrategy extends PassportStrategy(Strategy) {
 
     const user: UserDocument = await this.userModel.findOne({
       _id: new mongoose.Types.ObjectId(id),
-    });
+    })
+      .populate('role')
+      .exec();
     if (!user) throw new ServerException(ERROR_RESPONSE.USER_NOT_FOUND);
     if (!user.isActive) throw new ServerException(ERROR_RESPONSE.USER_DEACTIVATED);
+    const roleObject = user.role as unknown as RoleDocument;
+    if (!roleObject?.code || role !== roleObject.code) throw new ServerException(ERROR_RESPONSE.UNAUTHORIZED);
 
     return {
       id,
       email,
       jti,
-      role,
+      role: roleObject?.code,
       emailVerified: user.emailVerified,
     };
   }
