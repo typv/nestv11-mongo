@@ -10,15 +10,15 @@ export enum WorkbookVersionStatus {
 }
 
 export enum WorkbookPermission {
-  Read = 'read',
-  Write = 'write',
-  Admin = 'admin',
+  Read = 'Read',
+  Write = 'Write',
+  Admin = 'Admin',
 }
 
 export enum WorkbookSubVersionStatus {
-  PENDING = 1,
-  APPROVED = 2,
-  REJECTED = 3,
+  Pending = 'Pending',
+  Approved = 'Approved',
+  Rejected = 'Rejected',
 }
 
 export enum WorkbookStage {

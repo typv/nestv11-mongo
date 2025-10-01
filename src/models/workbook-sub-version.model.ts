@@ -26,16 +26,13 @@ export class WorkbookSubVersion {
   changeSet: Partial<IWorkbookData>;
 
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
-  updatedWorkbookBy: User;
-
-  @Prop({ type: Date, required: false })
-  updatedWorkbookAt?: Date;
+  updatedBy: User;
 
   @Prop({
     type: Number,
     enum: WorkbookSubVersionStatus,
     required: true,
-    default: WorkbookSubVersionStatus.PENDING,
+    default: WorkbookSubVersionStatus.Pending,
   })
   status: WorkbookSubVersionStatus;
 
