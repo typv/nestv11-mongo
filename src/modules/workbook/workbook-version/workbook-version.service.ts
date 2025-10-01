@@ -38,6 +38,7 @@ import {
 import {
   SubVersionResponseDto
 } from 'src/modules/workbook/workbook-version/dto/response/workbook-sub-version-response.dto';
+import { AwsS3Service } from 'src/modules/base/aws-s3';
 
 @Injectable()
 export class WorkbookVersionService extends BaseService {
@@ -50,6 +51,7 @@ export class WorkbookVersionService extends BaseService {
     @InjectModel(WorkbookSubVersion.name)
     private workbookSubVersionModel: Model<WorkbookSubVersionDocument>,
     @InjectModel(Role.name) private roleModel: Model<RoleDocument>,
+    private readonly awsS3Service: AwsS3Service,
   ) {
     super();
     this.logger = this.logger.child({ context: WorkbookVersionService.name });
@@ -1039,12 +1041,21 @@ export class WorkbookVersionService extends BaseService {
       ? subVersion.updatedBy.email
       : null;
 
-    // TODO: Get snapshot details from S3 if needed
-
     return plainToInstance(SubVersionResponseDto, {
       id: subVersion._id.toString(),
       ...subVersion,
-      updatedBy: updatedByEmail
+      updatedBy: updatedByEmail,
     }, { excludeExtraneousValues: true });
+  }
+
+  async getSubversionSnapshot(subVersionId: string): Promise<any> {
+    const subVersion = await this.workbookSubVersionModel.findOne({ _id: new Types.ObjectId(subVersionId) })
+      .lean()
+      .exec();
+    if (!subVersion) throw new ServerException(ERROR_RESPONSE.OBJECT_NOT_FOUND('Sub version'));
+
+    const object = await this.awsS3Service.getObject(subVersion?.snapshotFileKey);
+
+    return object?.fileBuffer;
   }
 }

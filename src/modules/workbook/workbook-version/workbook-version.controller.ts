@@ -1,5 +1,5 @@
-import { Body, Controller, Get, HttpStatus, Param, Patch, Post } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, HttpStatus, Param, Patch, Post, Res } from '@nestjs/common';
+import { ApiBearerAuth, ApiProduces, ApiTags } from '@nestjs/swagger';
 import { FormDataRequest } from 'nestjs-form-data';
 import {
   CreateWorkbookSubVersionDto,
@@ -12,6 +12,7 @@ import { WorkbookVersionService } from './workbook-version.service';
 import { SuccessResponseDto } from '../../../common/dto/success-response.dto';
 import { RoleCode } from '../../../common/enums';
 import { RoleBaseAccessControl, SwaggerApiDocument, User } from '../../../decorators';
+import { Response } from 'express';
 
 @Controller('workbook/version')
 @ApiTags('Workbook Version')
@@ -144,5 +145,27 @@ export class WorkbookVersionController {
     @Param('subVersionId') subVersionId: string,
   ): Promise<SubVersionResponseDto> {
     return this.workbookVersionService.subversionDetail(subVersionId);
+  }
+
+  @Get('sub-version/:subVersionId/snapshot')
+  @SwaggerApiDocument({
+    response: {
+      status: HttpStatus.OK,
+      type: Buffer,
+    },
+    operation: {
+      operationId: 'subversionSnapshot',
+      summary: 'Api getSubversionSnapshot',
+      description: 'Get Subversion Snapshot',
+    },
+  })
+  @ApiProduces('application/json')
+  async getSubversionSnapshot(
+    @Param('subVersionId') subVersionId: string,
+    @Res() res: Response
+  ): Promise<any> {
+    const fileBuffer = await this.workbookVersionService.getSubversionSnapshot(subVersionId);
+    res.setHeader('Content-Type', 'application/json');
+    res.status(HttpStatus.OK).send(fileBuffer);
   }
 }

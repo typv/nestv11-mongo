@@ -24,3 +24,8 @@ export class SubVersionResponseDto {
   @PropertyDto()
   snapshotFileKey: string;
 }
+
+export class SubVersionSnapshotDto {
+  @PropertyDto()
+  snapshotFileKey: string;
+}
