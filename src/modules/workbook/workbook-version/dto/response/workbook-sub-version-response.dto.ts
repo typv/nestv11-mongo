@@ -1,6 +1,7 @@
 import { PropertyDto } from 'src/decorators';
 import { WorkbookSubVersionStatus } from 'src/modules/workbook/workbook.enum';
 import { Types } from 'mongoose';
+import { IWorkbookData } from '@univerjs/core';
 
 export class SubVersionResponseDto {
   @PropertyDto()
@@ -23,6 +24,9 @@ export class SubVersionResponseDto {
 
   @PropertyDto()
   snapshotFileKey: string;
+
+  @PropertyDto()
+  changeSet: Partial<IWorkbookData>;
 }
 
 export class SubVersionSnapshotDto {
