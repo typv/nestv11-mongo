@@ -27,8 +27,6 @@ import {
   WorkbookSubVersionDocument,
   WorkbookVersion,
   WorkbookVersionDocument,
-  Worksheet,
-  WorksheetDocument,
 } from '../../../models';
 import { BaseService } from '../../base.service';
 import {
@@ -37,13 +35,15 @@ import {
   WorkbookSubVersionStatus,
   WorkbookVersionStatus,
 } from '../workbook.enum';
+import {
+  SubVersionResponseDto
+} from 'src/modules/workbook/workbook-version/dto/response/workbook-sub-version-response.dto';
 
 @Injectable()
 export class WorkbookVersionService extends BaseService {
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     @InjectModel(Workbook.name) private workbookModel: Model<WorkbookDocument>,
-    @InjectModel(Worksheet.name) private worksheetModel: Model<WorksheetDocument>,
     @InjectModel(WorkbookVersion.name)
     private workbookVersionModel: Model<WorkbookVersionDocument>,
     @InjectConnection() private readonly connection: Connection,
@@ -58,9 +58,10 @@ export class WorkbookVersionService extends BaseService {
   async createWorkbookSubVersion(
     userId: string,
     currentRole: RoleCode,
-    workbookId: string,
     body: CreateWorkbookSubVersionDto,
   ): Promise<SuccessResponseDto> {
+    const { workbookId } = body;
+
     const [workbook, role] = await Promise.all([
       this.workbookModel.findOne({
         _id: new Types.ObjectId(workbookId),
@@ -163,9 +164,9 @@ export class WorkbookVersionService extends BaseService {
 
   async submitWorkbookVersion(
     currentRole: RoleCode,
-    workbookId: string,
     body: SubmitVersionDto,
   ): Promise<SuccessResponseDto> {
+    const { workbookId } = body;
     const session = await this.connection.startSession();
     session.startTransaction();
 
@@ -794,10 +795,6 @@ export class WorkbookVersionService extends BaseService {
           workbookVersion: newWorkbookVersion._id,
         };
       });
-
-      await this.worksheetModel.insertMany(worksheetsDocs, {
-        session,
-      });
     }
 
     if (role.code !== RoleCode.PMS) {
@@ -921,6 +918,7 @@ export class WorkbookVersionService extends BaseService {
                     updatedBy: { $ifNull: ['$updatedByUser.email', null] },
                     updatedAt: 1,
                     createdAt: 1,
+                    snapshotFileKey: 1,
                   },
                 },
                 { $sort: { subVersionNumber: -1 } },
@@ -1028,5 +1026,25 @@ export class WorkbookVersionService extends BaseService {
     if (workbookSubVersionCount === 0) {
       throw new ServerException(ERROR_RESPONSE.REQUIRE_WORKBOOK_SUB_VERSIONS);
     }
+  }
+
+  async subversionDetail(subVersionId: string): Promise<SubVersionResponseDto> {
+    const subVersion = await this.workbookSubVersionModel.findOne({ _id: new Types.ObjectId(subVersionId) })
+      .populate('updatedBy')
+      .lean()
+      .exec();
+    if (!subVersion) throw new ServerException(ERROR_RESPONSE.OBJECT_NOT_FOUND('Sub version'));
+
+    const updatedByEmail = subVersion.updatedBy && typeof subVersion.updatedBy === 'object'
+      ? subVersion.updatedBy.email
+      : null;
+
+    // TODO: Get snapshot details from S3 if needed
+
+    return plainToInstance(SubVersionResponseDto, {
+      id: subVersion._id.toString(),
+      ...subVersion,
+      updatedBy: updatedByEmail
+    }, { excludeExtraneousValues: true });
   }
 }

@@ -58,9 +58,25 @@ services:
       - ${PWD}/.docker/redis-data:/data
     command: redis-server --appendonly yes --dir /data
 
+  minio:
+    extends:
+      file: ./.docker/compose/minio.yml
+      service: minio
+    volumes:
+      - ${PWD}/.docker/minio-data:/data
+    ports:
+      - "9100:9000"
+      - "9101:9001"
+    environment:
+      - MINIO_ROOT_USER=${AWS_S3_ACCESS_KEY_ID}
+      - MINIO_ROOT_PASSWORD=${AWS_S3_SECRET_ACCESS_KEY}
+    networks:
+      - crane-network
+
 volumes:
   redis-data:
   mongodb_data:
+  minio-data:
 
 networks:
   crane-network:

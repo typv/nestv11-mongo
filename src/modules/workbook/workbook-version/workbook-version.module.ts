@@ -12,15 +12,12 @@ import {
   WorkbookSubVersionSchema,
   WorkbookVersion,
   WorkbookVersionSchema,
-  Worksheet,
-  WorksheetSchema,
 } from '../../../models';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: Workbook.name, schema: WorkbookSchema },
-      { name: Worksheet.name, schema: WorksheetSchema },
       { name: WorkbookVersion.name, schema: WorkbookVersionSchema },
       { name: WorkbookSubVersion.name, schema: WorkbookSubVersionSchema },
       { name: Role.name, schema: RoleSchema },

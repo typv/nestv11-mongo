@@ -8,7 +8,7 @@ import { PaginationResponseDto } from 'src/common/dto';
 import { JsonStreamUtil } from 'src/common/utilities/json-stream.util';
 import { Logger } from 'winston';
 import { FindWorkbookListDto, ImportWorkbookDto, WorkbookListResponseDto } from './dto';
-import { ERROR_RESPONSE } from '../../common/constants';
+import { ERROR_RESPONSE, fileExtensionConstant } from '../../common/constants';
 import { SuccessResponseDto } from '../../common/dto/success-response.dto';
 import { RoleCode } from '../../common/enums';
 import { ServerException } from '../../exceptions';
@@ -19,22 +19,22 @@ import {
   WorkbookDocument,
   WorkbookVersion,
   WorkbookVersionDocument,
-  Worksheet,
-  WorksheetDocument,
 } from '../../models';
 import { BaseService } from '../base.service';
 import { WorkbookVersionStatus } from 'src/modules/workbook/workbook.enum';
+import { UploadService } from 'src/modules/upload';
+import { FileUtil } from 'src/common/utilities/file.util';
 
 @Injectable()
 export class WorkbookService extends BaseService {
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     @InjectModel(Workbook.name) private workbookModel: Model<WorkbookDocument>,
-    @InjectModel(Worksheet.name) private worksheetModel: Model<WorksheetDocument>,
     @InjectModel(WorkbookVersion.name)
     private workbookVersionModel: Model<WorkbookVersionDocument>,
     @InjectConnection() private readonly connection: Connection,
     @InjectModel(Role.name) private roleModel: Model<RoleDocument>,
+    private readonly uploadService: UploadService,
   ) {
     super();
     this.logger = this.logger.child({ context: WorkbookService.name });
@@ -46,6 +46,12 @@ export class WorkbookService extends BaseService {
     body: ImportWorkbookDto,
   ): Promise<SuccessResponseDto> {
     const { file } = body;
+
+    const isValidExtension = FileUtil.isValidExtension(file, [fileExtensionConstant.JSON]);
+    if (!isValidExtension) {
+      throw new ServerException(ERROR_RESPONSE.INVALID_OBJECT('file extension'));
+    }
+
     const jsonStream: Readable = Readable.from(file.buffer);
     let workbookData: IWorkbookData;
     try {
@@ -69,19 +75,22 @@ export class WorkbookService extends BaseService {
       });
     }
 
+    const univerWorkbookId = workbookData.id;
     const { sheets } = workbookData;
-    const sheetsData = Object.values(sheets);
     const sheetIds = Object.keys(sheets);
     this.validateSheetOrder(workbookData.sheetOrder, sheetIds);
+
+    // Save snapshot to S3
+    const uploadResponse = await this.uploadService.uploadFile(file, `workbooks/${univerWorkbookId}/snapshots`);
 
     const session = await this.connection.startSession();
     session.startTransaction();
     try {
       const workbook = await this.workbookModel.findOneAndUpdate(
-        { univerWorkbookId: workbookData.id, owner: new Types.ObjectId(userId) },
+        { univerWorkbookId: univerWorkbookId, owner: new Types.ObjectId(userId) },
         {
           $setOnInsert: {
-            univerWorkbookId: workbookData.id,
+            univerWorkbookId: univerWorkbookId,
             name: workbookData.name,
             owner: new Types.ObjectId(userId),
           },
@@ -90,7 +99,7 @@ export class WorkbookService extends BaseService {
       );
       // Create workbook version
       const version = await this.getNextWorkbookVersion(workbook._id, session);
-      const [workbookVersion] = await this.workbookVersionModel.create(
+      await this.workbookVersionModel.create(
         [
           {
             ...workbookData,
@@ -100,26 +109,9 @@ export class WorkbookService extends BaseService {
             status: WorkbookVersionStatus.Awaiting,
             submittedBy: new Types.ObjectId(userId),
             submittedAt: new Date(),
+            snapshotFileKey: uploadResponse.fileKey,
           },
         ],
-        { session },
-      );
-      // Create worksheets
-      const worksheetsDocs = sheetsData.map((sheet: IWorksheetData) => {
-        return {
-          ...sheet,
-          workbook: workbook._id,
-          univerWorksheetId: sheet.id,
-          workbookVersion: workbookVersion._id,
-        };
-      });
-      const newWorksheets = await this.worksheetModel.insertMany(worksheetsDocs, {
-        session,
-      });
-      // Link worksheets to workbook version
-      await this.workbookVersionModel.updateOne(
-        { _id: workbookVersion._id },
-        { $set: { sheets: newWorksheets.map((worksheet) => worksheet._id) } },
         { session },
       );
       await session.commitTransaction();
