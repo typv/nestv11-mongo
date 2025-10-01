@@ -406,5 +406,6 @@ Temporary Items
 .docker/redis-data/
 .docker/redisinsight_data/
 .docker/mongodb_data/
+.docker/minio_data/
 
 .pnpm-store/

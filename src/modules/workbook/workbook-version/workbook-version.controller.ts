@@ -4,7 +4,7 @@ import { FormDataRequest } from 'nestjs-form-data';
 import {
   CreateWorkbookSubVersionDto,
   ReviewWorkbookSubVersionDto,
-  SubmitVersionDto,
+  SubmitVersionDto, SubVersionResponseDto,
   UpdateWorkbookSubVersionDto,
   VersionResponseDto
 } from './dto';
@@ -21,7 +21,7 @@ export class WorkbookVersionController {
   constructor(private readonly workbookVersionService: WorkbookVersionService) {}
 
   @RoleBaseAccessControl(RoleCode.IMA, RoleCode.PMA)
-  @Post(':workbookId/create-sub-version')
+  @Post('sub-version')
   @FormDataRequest()
   @SwaggerApiDocument({
     response: {
@@ -36,19 +36,17 @@ export class WorkbookVersionController {
   createSubVersion(
     @User('id') userId: string,
     @User('role') role: RoleCode,
-    @Param('workbookId') workbookId: string,
     @Body() body: CreateWorkbookSubVersionDto,
   ): Promise<SuccessResponseDto> {
     return this.workbookVersionService.createWorkbookSubVersion(
       userId,
       role,
-      workbookId,
       body,
     );
   }
 
   @RoleBaseAccessControl(RoleCode.IMA, RoleCode.PMA)
-  @Patch(':workbookSubVersionId/update-sub-version')
+  @Patch('sub-version/:workbookSubVersionId')
   @FormDataRequest()
   @SwaggerApiDocument({
     response: {
@@ -72,7 +70,7 @@ export class WorkbookVersionController {
     );
   }
 
-  @Post(':workbookId/submit')
+  @Post('submit')
   @FormDataRequest()
   @SwaggerApiDocument({
     response: {
@@ -86,14 +84,13 @@ export class WorkbookVersionController {
   })
   submitWorkbookVersion(
     @User('role') role: RoleCode,
-    @Param('workbookId') workbookId: string,
     @Body() body: SubmitVersionDto,
   ): Promise<SuccessResponseDto> {
-    return this.workbookVersionService.submitWorkbookVersion(role, workbookId, body);
+    return this.workbookVersionService.submitWorkbookVersion(role, body);
   }
 
   @RoleBaseAccessControl(RoleCode.IMS, RoleCode.PMA, RoleCode.PMS)
-  @Post('review-sub-version')
+  @Post('sub-version/review')
   @SwaggerApiDocument({
     response: {
       status: HttpStatus.OK,
@@ -117,7 +114,6 @@ export class WorkbookVersionController {
     response: {
       status: HttpStatus.OK,
       type: VersionResponseDto,
-      isPagination: true,
     },
     operation: {
       operationId: 'workbookList',
@@ -130,5 +126,23 @@ export class WorkbookVersionController {
     @Param('workbookId') workbookId: string,
   ): Promise<VersionResponseDto[]> {
     return this.workbookVersionService.versionList(userId, workbookId);
+  }
+
+  @Get('sub-version/:subVersionId')
+  @SwaggerApiDocument({
+    response: {
+      status: HttpStatus.OK,
+      type: SubVersionResponseDto,
+    },
+    operation: {
+      operationId: 'subversionDetail',
+      summary: 'Api subversionDetail',
+      description: 'Subversion detail',
+    },
+  })
+  subversionDetail(
+    @Param('subVersionId') subVersionId: string,
+  ): Promise<SubVersionResponseDto> {
+    return this.workbookVersionService.subversionDetail(subVersionId);
   }
 }

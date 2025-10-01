@@ -4,7 +4,6 @@ import { HydratedDocument, Schema as MongooseSchema, Types } from 'mongoose';
 import { Role } from './role.model';
 import { User } from './user.model';
 import { Workbook } from './workbook.model';
-import { Worksheet } from './worksheet.model';
 import { LocaleType } from '../modules/workbook/dto';
 import { WorkbookPermission, WorkbookVersionStatus } from 'src/modules/workbook/workbook.enum';
 
@@ -55,9 +54,6 @@ export class WorkbookVersion {
   @Prop({ type: Boolean, required: true, default: true })
   isCurrentActive: boolean;
 
-  @Prop({ type: [Types.ObjectId], ref: 'Worksheet', required: true })
-  sheets: Worksheet[];
-
   @Prop({ type: Types.ObjectId, ref: 'Workbook', required: true })
   workbook: Workbook;
 
@@ -77,6 +73,9 @@ export class WorkbookVersion {
 
   @Prop({ type: Date, required: false })
   submittedAt?: Date;
+
+  @Prop({ type: String })
+  snapshotFileKey?: string;
 }
 
 export const WorkbookVersionSchema = SchemaFactory.createForClass(WorkbookVersion);

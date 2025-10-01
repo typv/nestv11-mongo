@@ -20,4 +20,7 @@ export class SubVersionResponseDto {
 
   @PropertyDto()
   rejectedReason: string;
+
+  @PropertyDto()
+  snapshotFileKey: string;
 }

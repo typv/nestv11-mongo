@@ -6,4 +6,6 @@ export default registerAs('awsS3', () => ({
   awsS3SecretAccessKey: process.env.AWS_S3_SECRET_ACCESS_KEY,
   awsS3BucketName: process.env.AWS_S3_BUCKET_NAME,
   cloudFrontUrl: process.env.CLOUDFRONT_URL,
+  minioEnabled: process.env.MINIO_ENABLED === 'true',
+  minioUrl: process.env.MINIO_URL,
 }));

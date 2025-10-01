@@ -50,6 +50,9 @@ export class WorkbookSubVersion {
 
   @Prop({ type: Types.ObjectId, ref: 'WorkbookVersion', required: false, default: null })
   workbookVersion: WorkbookVersion;
+
+  @Prop({ type: String })
+  snapshotFileKey?: string;
 }
 
 export const WorkbookSubVersionSchema = SchemaFactory.createForClass(WorkbookSubVersion);

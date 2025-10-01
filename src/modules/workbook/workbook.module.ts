@@ -10,21 +10,22 @@ import {
   WorkbookSchema,
   WorkbookVersion,
   WorkbookVersionSchema,
-  Worksheet,
-  WorksheetSchema,
 } from '../../models';
 import { WorkbookVersionModule } from 'src/modules/workbook/workbook-version/workbook-version.module';
+import { AwsS3Module } from 'src/modules/base/aws-s3';
+import { UploadModule } from 'src/modules/upload';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: Workbook.name, schema: WorkbookSchema },
-      { name: Worksheet.name, schema: WorksheetSchema },
       { name: WorkbookVersion.name, schema: WorkbookVersionSchema },
       { name: Role.name, schema: RoleSchema },
     ]),
     NestjsFormDataModule,
     WorkbookVersionModule,
+    AwsS3Module,
+    UploadModule
   ],
   controllers: [WorkbookController],
   providers: [WorkbookService],

@@ -1,6 +1,5 @@
 import { HasMimeType, IsFile, MaxFileSize } from 'nestjs-form-data';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
 import { fileValidationConstant } from 'src/common/constants';
 import { PropertyDto } from 'src/decorators';
 
