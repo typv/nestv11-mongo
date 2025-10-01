@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { IWorkbookData, IWorksheetData } from '@univerjs/core';
+import { plainToInstance } from 'class-transformer';
 import { ClientSession, Connection, Model, Types } from 'mongoose';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Readable } from 'stream';
@@ -34,9 +35,8 @@ import {
   WorkbookApprovedStatus,
   WorkbookStage,
   WorkbookSubVersionStatus,
-  WorkbookVersionStatus
+  WorkbookVersionStatus,
 } from '../workbook.enum';
-import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class WorkbookVersionService extends BaseService {
@@ -163,7 +163,7 @@ export class WorkbookVersionService extends BaseService {
 
   async submitWorkbookVersion(
     currentRole: RoleCode,
-    workbookVersionId: string,
+    workbookId: string,
     body: SubmitVersionDto,
   ): Promise<SuccessResponseDto> {
     const session = await this.connection.startSession();
@@ -172,7 +172,12 @@ export class WorkbookVersionService extends BaseService {
     const [currentWorkbookVersion] = <WorkbookVersionDocument[]>(
       await this.workbookVersionModel
         .aggregate([
-          { $match: { _id: new Types.ObjectId(workbookVersionId) } },
+          {
+            $match: {
+              workbook: new Types.ObjectId(workbookId),
+              isCurrentActive: true,
+            },
+          },
           {
             $lookup: {
               from: 'roles',
@@ -225,6 +230,12 @@ export class WorkbookVersionService extends BaseService {
       throw new ServerException(ERROR_RESPONSE.WORKBOOK_VERSION_NOT_CURRENT_ACTIVE);
     }
     const workbook = currentWorkbookVersion.workbook as WorkbookDocument;
+    await this.validateSubmittedWorkbookVersion(
+      currentWorkbookVersion,
+      workbook,
+      currentRole,
+      session,
+    );
     this.validatePermissions(currentRole, workbook.currentStage);
 
     const parsedWorkbookData = await this.extractDataFromFile(body.file);
@@ -429,11 +440,12 @@ export class WorkbookVersionService extends BaseService {
     );
     if (rejectedWorkbookSubVersions.length > 0) {
       newStage = WorkbookStage.IMA_UPDATE_INPUTS;
-    } else {
-      await this.setWorkbookVersionStatusForRejectedWorkbookVersion(
+
+      await this.setWorkbookVersionStatusForRejectedWorkbookSubVersion(
         currentWorkbookVersion,
         session,
       );
+    } else {
       const pmaRole = await this.roleModel.findOne({ code: RoleCode.PMA });
       await this.createNewWorkbookVersion(
         data,
@@ -473,7 +485,7 @@ export class WorkbookVersionService extends BaseService {
     if (rejectedWorkbookSubVersions.length > 0) {
       newStage = WorkbookStage.IMS_REVIEW;
 
-      await this.setWorkbookVersionStatusForRejectedWorkbookVersion(
+      await this.setWorkbookVersionStatusForRejectedWorkbookSubVersion(
         currentWorkbookVersion,
         session,
       );
@@ -789,7 +801,7 @@ export class WorkbookVersionService extends BaseService {
     }
 
     if (role.code !== RoleCode.PMS) {
-      await this.setWorkbookVersionStatusForApprovedWorkbookVersion(
+      await this.setWorkbookVersionStatusForApprovedWorkbookSubVersion(
         currentWorkbookVersion,
         workbook,
         session,
@@ -810,7 +822,7 @@ export class WorkbookVersionService extends BaseService {
     }
   }
 
-  private async setWorkbookVersionStatusForApprovedWorkbookVersion(
+  private async setWorkbookVersionStatusForApprovedWorkbookSubVersion(
     currentWorkbookVersion: WorkbookVersionDocument,
     workbook: WorkbookDocument,
     session: ClientSession,
@@ -837,7 +849,7 @@ export class WorkbookVersionService extends BaseService {
     );
   }
 
-  private async setWorkbookVersionStatusForRejectedWorkbookVersion(
+  private async setWorkbookVersionStatusForRejectedWorkbookSubVersion(
     currentWorkbookVersion: WorkbookVersionDocument,
     session: ClientSession,
   ): Promise<void> {
@@ -860,6 +872,7 @@ export class WorkbookVersionService extends BaseService {
       {
         $set: {
           isCurrentActive: true,
+          status: WorkbookVersionStatus.Rejected,
         },
       },
       { session },
@@ -954,5 +967,66 @@ export class WorkbookVersionService extends BaseService {
     );
 
     return plainToInstance(VersionResponseDto, versions, { excludeExtraneousValues: true } );
+  }
+
+  private async validateSubmittedWorkbookVersion(
+    workbookVersion: WorkbookVersionDocument,
+    workbook: WorkbookDocument,
+    roleCode: RoleCode,
+    session: ClientSession,
+  ): Promise<void> {
+    if (roleCode === RoleCode.PMS || workbook.currentStage === WorkbookStage.PMA_REVIEW)
+      return;
+
+    const workbookSubVersionCount = await this.workbookSubVersionModel
+      .countDocuments({
+        workbookVersion: workbookVersion._id,
+      })
+      .session(session)
+      .exec();
+    if (
+      roleCode === RoleCode.IMS &&
+      workbook.currentStage === WorkbookStage.IMS_REVIEW &&
+      workbookSubVersionCount === 0
+    ) {
+      const imaWorkbookSubVersions = <WorkbookSubVersionDocument[]>(
+        await this.workbookSubVersionModel
+          .aggregate([
+            {
+              $match: {
+                workbook: workbook._id,
+              },
+            },
+            {
+              $lookup: {
+                from: 'workbook-versions',
+                localField: 'workbookVersion',
+                foreignField: '_id',
+                as: 'workbookVersion',
+              },
+            },
+            { $unwind: '$workbookVersion' },
+            {
+              $match: {
+                'workbookVersion.version': workbookVersion.version - 1,
+              },
+            },
+          ])
+          .session(session)
+          .exec()
+      );
+      // by pass validate required workbook sub versions if all rejected
+      const rejectedWorkbookSubVersions = imaWorkbookSubVersions.filter(
+        (subVersion) => subVersion.status === WorkbookSubVersionStatus.Rejected,
+      );
+      const allRejectedWorkbookSubVersion =
+        rejectedWorkbookSubVersions.length === imaWorkbookSubVersions.length;
+
+      if (allRejectedWorkbookSubVersion) return;
+    }
+
+    if (workbookSubVersionCount === 0) {
+      throw new ServerException(ERROR_RESPONSE.REQUIRE_WORKBOOK_SUB_VERSIONS);
+    }
   }
 }

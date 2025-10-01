@@ -1,10 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { IWorkbookData } from '@univerjs/core';
 import { HydratedDocument, Schema as MongooseSchema, Types } from 'mongoose';
+import { WorkbookSubVersionStatus } from 'src/modules/workbook/workbook.enum';
 import { User } from './user.model';
 import { WorkbookVersion } from './workbook-version.model';
 import { Workbook } from './workbook.model';
-import { WorkbookSubVersionStatus } from 'src/modules/workbook/workbook.enum';
 
 export type WorkbookSubVersionDocument = HydratedDocument<WorkbookSubVersion>;
 
@@ -29,7 +29,7 @@ export class WorkbookSubVersion {
   updatedBy: User;
 
   @Prop({
-    type: Number,
+    type: String,
     enum: WorkbookSubVersionStatus,
     required: true,
     default: WorkbookSubVersionStatus.Pending,
@@ -39,10 +39,10 @@ export class WorkbookSubVersion {
   @Prop({ type: String, required: false })
   rejectedReason: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', required: false })
+  @Prop({ type: Types.ObjectId, ref: 'User', required: false, default: null })
   reviewedBy?: User;
 
-  @Prop({ type: Date, required: false })
+  @Prop({ type: Date, required: false, default: null })
   reviewedAt?: Date;
 
   @Prop({ type: Types.ObjectId, ref: 'Workbook', required: true })

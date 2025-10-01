@@ -12,6 +12,7 @@ import { WorkbookVersionService } from './workbook-version.service';
 import { SuccessResponseDto } from '../../../common/dto/success-response.dto';
 import { RoleCode } from '../../../common/enums';
 import { RoleBaseAccessControl, SwaggerApiDocument, User } from '../../../decorators';
+
 @Controller('workbook/version')
 @ApiTags('Workbook Version')
 @ApiBearerAuth()
@@ -71,7 +72,7 @@ export class WorkbookVersionController {
     );
   }
 
-  @Post(':workbookVersionId/submit')
+  @Post(':workbookId/submit')
   @FormDataRequest()
   @SwaggerApiDocument({
     response: {
@@ -85,14 +86,10 @@ export class WorkbookVersionController {
   })
   submitWorkbookVersion(
     @User('role') role: RoleCode,
-    @Param('workbookVersionId') workbookVersionId: string,
+    @Param('workbookId') workbookId: string,
     @Body() body: SubmitVersionDto,
   ): Promise<SuccessResponseDto> {
-    return this.workbookVersionService.submitWorkbookVersion(
-      role,
-      workbookVersionId,
-      body,
-    );
+    return this.workbookVersionService.submitWorkbookVersion(role, workbookId, body);
   }
 
   @RoleBaseAccessControl(RoleCode.IMS, RoleCode.PMA, RoleCode.PMS)
