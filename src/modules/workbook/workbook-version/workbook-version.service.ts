@@ -9,7 +9,8 @@ import {
   CreateWorkbookSubVersionDto,
   ReviewWorkbookSubVersionDto,
   SubmitVersionDto,
-  UpdateWorkbookSubVersionDto, WorkbookVersionsResponseDto,
+  UpdateWorkbookSubVersionDto,
+  VersionResponseDto
 } from './dto';
 import { ERROR_RESPONSE } from '../../../common/constants';
 import { SuccessResponseDto } from '../../../common/dto/success-response.dto';
@@ -90,9 +91,9 @@ export class WorkbookVersionService extends BaseService {
         role: role._id,
         version: version,
         changeSet: data,
-        updatedWorkbookBy: new Types.ObjectId(userId),
-        updatedWorkbookAt: new Date(),
-        status: WorkbookSubVersionStatus.PENDING,
+        updatedBy: new Types.ObjectId(userId),
+        updatedAt: new Date(),
+        status: WorkbookSubVersionStatus.Pending,
         workbookVersion: workbookVersion._id,
       });
 
@@ -121,8 +122,8 @@ export class WorkbookVersionService extends BaseService {
   ) {
     const workbookSubVersion = await this.workbookSubVersionModel.findOne({
       _id: new Types.ObjectId(workbookSubVersionId),
-      updatedWorkbookBy: new Types.ObjectId(userId),
-      status: WorkbookSubVersionStatus.REJECTED,
+      updatedBy: new Types.ObjectId(userId),
+      status: WorkbookSubVersionStatus.Rejected,
     });
     if (!workbookSubVersion) {
       throw new ServerException(ERROR_RESPONSE.OBJECT_NOT_FOUND('Workbook sub version'));
@@ -135,8 +136,8 @@ export class WorkbookVersionService extends BaseService {
         {
           $set: {
             changeSet: parsedWorkbookData,
-            updatedWorkbookAt: new Date(),
-            status: WorkbookSubVersionStatus.PENDING,
+            updatedAt: new Date(),
+            status: WorkbookSubVersionStatus.Pending,
             rejectedReason: null,
           },
         },
@@ -288,7 +289,7 @@ export class WorkbookVersionService extends BaseService {
     const workbookSubVersion = await this.workbookSubVersionModel
       .findOne({
         _id: new Types.ObjectId(workbookSubVersionId),
-        status: WorkbookSubVersionStatus.PENDING,
+        status: WorkbookSubVersionStatus.Pending,
       })
       .select(['changeSet', 'workbook', 'workbookVersion'])
       .populate({
@@ -327,7 +328,7 @@ export class WorkbookVersionService extends BaseService {
         },
         { session },
       );
-      if (status === WorkbookSubVersionStatus.APPROVED) {
+      if (status === WorkbookSubVersionStatus.Approved) {
         if (currentReviewRole === RoleCode.IMS) {
           await this.duplicateWorkbookSubVersionToIMS(
             userId,
@@ -582,11 +583,11 @@ export class WorkbookVersionService extends BaseService {
         {
           version: version,
           changeSet: workbookSubVersion.changeSet,
-          status: WorkbookSubVersionStatus.PENDING,
+          status: WorkbookSubVersionStatus.Pending,
           workbook: workbookSubVersion.workbook,
           workbookVersion: workbookVersion._id,
-          updatedWorkbookBy: new Types.ObjectId(reviewerId),
-          updatedWorkbookAt: new Date(),
+          updatedBy: new Types.ObjectId(reviewerId),
+          updatedAt: new Date(),
         },
       ],
       { session },
@@ -678,8 +679,8 @@ export class WorkbookVersionService extends BaseService {
               workbook: workbookId,
               status: {
                 $in: [
-                  WorkbookSubVersionStatus.PENDING,
-                  WorkbookSubVersionStatus.REJECTED,
+                  WorkbookSubVersionStatus.Pending,
+                  WorkbookSubVersionStatus.Approved,
                 ],
               },
             },
@@ -720,13 +721,13 @@ export class WorkbookVersionService extends BaseService {
     );
 
     const unapprovedWorkbookSubVersions = workbookSubVersions.filter(
-      (subVersion) => subVersion.status === WorkbookSubVersionStatus.PENDING,
+      (subVersion) => subVersion.status === WorkbookSubVersionStatus.Pending,
     );
     if (unapprovedWorkbookSubVersions.length > 0) {
       throw new ServerException(ERROR_RESPONSE.UNAPPROVED_WORKBOOK_SUB_VERSIONS);
     }
     const rejectedWorkbookSubVersions = workbookSubVersions.filter(
-      (subVersion) => subVersion.status === WorkbookSubVersionStatus.REJECTED,
+      (subVersion) => subVersion.status === WorkbookSubVersionStatus.Rejected,
     );
 
     return rejectedWorkbookSubVersions;
@@ -865,7 +866,7 @@ export class WorkbookVersionService extends BaseService {
     );
   }
 
-  async versionList(userId: string, workbookId: string): Promise<WorkbookVersionsResponseDto[]> {
+  async versionList(userId: string, workbookId: string): Promise<VersionResponseDto[]> {
     const workbook = await this.workbookModel.findOne({
       _id: new Types.ObjectId(workbookId),
     });
@@ -876,6 +877,44 @@ export class WorkbookVersionService extends BaseService {
       await this.workbookVersionModel
         .aggregate([
           { $match: { workbook: workbook._id } },
+          {
+            $lookup: {
+              from: 'workbook-sub-versions',
+              localField: '_id',
+              foreignField: 'workbookVersion',
+              as: 'subVersions',
+              pipeline: [
+                {
+                  $lookup: {
+                    from: 'users',
+                    localField: 'updatedBy',
+                    foreignField: '_id',
+                    as: 'updatedByUser',
+                  },
+                },
+                {
+                  $unwind: {
+                    path: '$updatedByUser',
+                    preserveNullAndEmptyArrays: true,
+                  },
+                },
+                {
+                  $project: {
+                    _id: 0,
+                    id: { $toString: '$_id' },
+                    version: 1,
+                    status: 1,
+                    rejectedReason: 1,
+                    updatedBy: { $ifNull: ['$updatedByUser.email', null] },
+                    updatedAt: 1,
+                    createdAt: 1,
+                  },
+                },
+                { $sort: { subVersionNumber: -1 } },
+              ],
+            },
+          },
+          { $unwind: '$role' },
           {
             $lookup: {
               from: 'roles',
@@ -904,8 +943,9 @@ export class WorkbookVersionService extends BaseService {
               isCurrentActive: 1,
               createdAt: 1,
               updatedAt: 1,
-              submittedBy: '$submittedBy.email',
+              submittedBy: { $ifNull: ['$submittedBy.email', null] },
               submittedAt: 1,
+              subVersions: 1,
             },
           },
           { $sort: { version: -1 } },
@@ -913,6 +953,6 @@ export class WorkbookVersionService extends BaseService {
         .exec()
     );
 
-    return plainToInstance(WorkbookVersionsResponseDto, versions, { excludeExtraneousValues: true } );
+    return plainToInstance(VersionResponseDto, versions, { excludeExtraneousValues: true } );
   }
 }

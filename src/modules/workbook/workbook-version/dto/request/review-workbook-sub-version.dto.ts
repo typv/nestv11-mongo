@@ -9,11 +9,11 @@ export class ReviewWorkbookSubVersionDto {
 
   @ApiProperty({
     description: 'Status',
-    example: WorkbookSubVersionStatus.APPROVED,
+    example: WorkbookSubVersionStatus.Approved,
   })
   @IsNotEmpty()
   @IsEnum(WorkbookSubVersionStatus)
-  @IsIn([WorkbookSubVersionStatus.APPROVED, WorkbookSubVersionStatus.REJECTED])
+  @IsIn([WorkbookSubVersionStatus.Approved, WorkbookSubVersionStatus.Rejected])
   status: WorkbookSubVersionStatus;
 
   @ApiProperty({

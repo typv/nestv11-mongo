@@ -1,7 +1,10 @@
 import { PropertyDto } from 'src/decorators';
 import { WorkbookVersionStatus } from 'src/modules/workbook/workbook.enum';
+import {
+  SubVersionResponseDto
+} from 'src/modules/workbook/workbook-version/dto/response/workbook-sub-version-response.dto';
 
-export class WorkbookVersionsResponseDto {
+export class VersionResponseDto {
   @PropertyDto()
   id: string;
 
@@ -28,4 +31,10 @@ export class WorkbookVersionsResponseDto {
 
   @PropertyDto()
   submittedAt: Date;
+
+  @PropertyDto({
+    type: SubVersionResponseDto,
+    structure: 'dtoArray',
+  })
+  subVersions: SubVersionResponseDto[];
 }

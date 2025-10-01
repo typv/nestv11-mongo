@@ -5,7 +5,8 @@ import {
   CreateWorkbookSubVersionDto,
   ReviewWorkbookSubVersionDto,
   SubmitVersionDto,
-  UpdateWorkbookSubVersionDto, WorkbookVersionsResponseDto,
+  UpdateWorkbookSubVersionDto,
+  VersionResponseDto
 } from './dto';
 import { WorkbookVersionService } from './workbook-version.service';
 import { SuccessResponseDto } from '../../../common/dto/success-response.dto';
@@ -118,7 +119,7 @@ export class WorkbookVersionController {
   @SwaggerApiDocument({
     response: {
       status: HttpStatus.OK,
-      type: WorkbookVersionsResponseDto,
+      type: VersionResponseDto,
       isPagination: true,
     },
     operation: {
@@ -130,7 +131,7 @@ export class WorkbookVersionController {
   versionList(
     @User('id') userId: string,
     @Param('workbookId') workbookId: string,
-  ): Promise<WorkbookVersionsResponseDto[]> {
+  ): Promise<VersionResponseDto[]> {
     return this.workbookVersionService.versionList(userId, workbookId);
   }
 }
