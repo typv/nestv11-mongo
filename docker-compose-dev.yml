@@ -65,8 +65,8 @@ services:
     volumes:
       - ${PWD}/.docker/minio-data:/data
     ports:
-      - "9100:9000"
-      - "9101:9001"
+      - "9110:9000"
+      - "9111:9001"
     environment:
       - MINIO_ROOT_USER=${AWS_S3_ACCESS_KEY_ID}
       - MINIO_ROOT_PASSWORD=${AWS_S3_SECRET_ACCESS_KEY}
