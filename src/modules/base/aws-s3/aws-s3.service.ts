@@ -1,14 +1,15 @@
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { GetObjectCommand, GetObjectCommandOutput, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigType } from '@nestjs/config';
 import { s3Configuration } from 'src/config';
 import { Readable } from 'stream';
-import { uploadResponse } from 'src/modules/base/aws-s3/aws-s3.interface';
+import { getObjectResponse, uploadResponse } from 'src/modules/base/aws-s3/aws-s3.interface';
 import slugify from 'slugify';
 import { Upload } from '@aws-sdk/lib-storage';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
+import { FileUtil } from 'src/common/utilities/file.util';
 
 @Injectable()
 export class AwsS3Service {
@@ -106,6 +107,32 @@ export class AwsS3Service {
       this.logger.error('AwsS3Service.upload: ', err);
 
       throw new Error();
+    }
+  }
+
+  async getObject(fileKey: string): Promise<getObjectResponse> {
+    const params = {
+      Bucket: this.bucket,
+      Key: fileKey,
+    };
+
+    try {
+      const command = new GetObjectCommand(params);
+      const response: GetObjectCommandOutput = await this.s3Client.send(command);
+
+      if (!response.Body) {
+        return null;
+      }
+
+      const stream = response.Body as Readable;
+      const fileBuffer = await FileUtil.streamToBuffer(stream);
+
+      return {
+        fileBuffer
+      };
+    } catch (error) {
+      console.error(`Error retrieving object ${fileKey}:`, error);
+      throw error;
     }
   }
 }

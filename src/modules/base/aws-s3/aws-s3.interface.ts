@@ -3,3 +3,7 @@ export interface uploadResponse {
   fileKey: string,
   extension: string,
 }
+
+export interface getObjectResponse {
+  fileBuffer: Buffer,
+}
