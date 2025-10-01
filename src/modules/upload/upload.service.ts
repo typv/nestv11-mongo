@@ -51,11 +51,7 @@ export class UploadService {
 
       return result;
     } catch (error) {
-      this.logger.error({
-        message: 'UploadService.uploadFile: Failed to upload file',
-        context: 'UploadService.uploadFile',
-        error: error,
-      });
+      this.logger.error('uploadFile', error);
 
       throw new ServerException({
         ...ERROR_RESPONSE.BAD_REQUEST,
