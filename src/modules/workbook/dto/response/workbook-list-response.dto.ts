@@ -3,7 +3,10 @@ import { WorkbookApprovedStatus } from 'src/modules/workbook/workbook.enum';
 
 export class WorkbookListResponseDto {
   @PropertyDto()
-  id: string;
+  workbookId: string;
+
+  @PropertyDto()
+  workbookVersionId: string;
 
   @PropertyDto()
   univerWorkbookId: string;
