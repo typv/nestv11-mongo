@@ -296,4 +296,9 @@ export const ERROR_RESPONSE = {
     errorCode: 'unapproved_workbook_sub_versions',
     message: 'There are unapproved workbook sub versions',
   },
+  REQUIRE_WORKBOOK_SUB_VERSIONS: {
+    statusCode: HttpStatus.BAD_REQUEST,
+    errorCode: 'require_workbook_sub_versions',
+    message: 'Require workbook sub versions',
+  },
 };
