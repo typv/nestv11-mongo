@@ -39,6 +39,9 @@ import {
   SubVersionResponseDto
 } from 'src/modules/workbook/workbook-version/dto/response/workbook-sub-version-response.dto';
 import { AwsS3Service } from 'src/modules/base/aws-s3';
+import {
+  WorkbookVersionSnapshotResponseDto
+} from 'src/modules/workbook/workbook-version/dto/response/workbook-version-snapshot-response.dto';
 
 @Injectable()
 export class WorkbookVersionService extends BaseService {
@@ -1048,14 +1051,22 @@ export class WorkbookVersionService extends BaseService {
     }, { excludeExtraneousValues: true });
   }
 
-  async getSubversionSnapshot(subVersionId: string): Promise<any> {
+  async getSubversionSnapshot(subVersionId: string): Promise<WorkbookVersionSnapshotResponseDto> {
     const subVersion = await this.workbookSubVersionModel.findOne({ _id: new Types.ObjectId(subVersionId) })
       .lean()
       .exec();
     if (!subVersion) throw new ServerException(ERROR_RESPONSE.OBJECT_NOT_FOUND('Sub version'));
 
-    const object = await this.awsS3Service.getObject(subVersion?.snapshotFileKey);
+    try {
+      const result = await this.awsS3Service.generatePresignedUrl(subVersion?.snapshotFileKey);
 
-    return object?.fileBuffer;
+      return {
+        presignedURL: result,
+      };
+    } catch (error) {
+      this.logger.error('getSubversionSnapshot', error);
+
+      throw new ServerException(ERROR_RESPONSE.RESOURCE_NOT_FOUND);
+    }
   }
 }

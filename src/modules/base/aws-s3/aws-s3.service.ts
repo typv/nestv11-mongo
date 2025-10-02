@@ -10,6 +10,8 @@ import { Upload } from '@aws-sdk/lib-storage';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
 import { FileUtil } from 'src/common/utilities/file.util';
+import { getSignedUrl as getAwsSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { APP_DEFAULTS } from 'src/common/constants';
 
 @Injectable()
 export class AwsS3Service {
@@ -134,5 +136,14 @@ export class AwsS3Service {
       console.error(`Error retrieving object ${fileKey}:`, error);
       throw error;
     }
+  }
+
+  async generatePresignedUrl(
+    fileKey: string,
+    contentType: string = APP_DEFAULTS.CONTENT_TYPE_DEFAULT,
+  ): Promise<string> {
+    const command = new PutObjectCommand({ Bucket: this.bucket, Key: fileKey, ContentType: contentType });
+    const presignedUrl = await getAwsSignedUrl(this.s3Client, command, { expiresIn: 7200 });
+    return presignedUrl;
   }
 }
