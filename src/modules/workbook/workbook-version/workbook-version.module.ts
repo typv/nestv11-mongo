@@ -13,6 +13,7 @@ import {
   WorkbookVersion,
   WorkbookVersionSchema,
 } from '../../../models';
+import { UploadModule } from '../../upload';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import {
       { name: Role.name, schema: RoleSchema },
     ]),
     NestjsFormDataModule,
+    UploadModule,
   ],
   controllers: [WorkbookVersionController],
   providers: [WorkbookVersionService],

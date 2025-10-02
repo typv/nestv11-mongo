@@ -4,8 +4,8 @@ import { FormDataRequest } from 'nestjs-form-data';
 import {
   CreateWorkbookSubVersionDto,
   ReviewWorkbookSubVersionDto,
-  SubmitVersionDto, SubVersionResponseDto,
-  UpdateWorkbookSubVersionDto,
+  SubmitVersionDto, 
+  SubVersionResponseDto,
   VersionResponseDto
 } from './dto';
 import { WorkbookVersionService } from './workbook-version.service';
@@ -42,36 +42,7 @@ export class WorkbookVersionController {
     @User('role') role: RoleCode,
     @Body() body: CreateWorkbookSubVersionDto,
   ): Promise<SuccessResponseDto> {
-    return this.workbookVersionService.createWorkbookSubVersion(
-      userId,
-      role,
-      body,
-    );
-  }
-
-  @RoleBaseAccessControl(RoleCode.IMA, RoleCode.PMA)
-  @Patch('sub-version/:workbookSubVersionId')
-  @FormDataRequest()
-  @SwaggerApiDocument({
-    response: {
-      status: HttpStatus.OK,
-    },
-    body: { type: UpdateWorkbookSubVersionDto, required: true },
-    operation: {
-      operationId: 'updateSubVersion',
-      summary: 'Update sub version',
-    },
-  })
-  updateSubVersion(
-    @User('id') userId: string,
-    @Param('workbookSubVersionId') workbookSubVersionId: string,
-    @Body() body: UpdateWorkbookSubVersionDto,
-  ): Promise<SuccessResponseDto> {
-    return this.workbookVersionService.updateWorkbookSubVersion(
-      userId,
-      workbookSubVersionId,
-      body,
-    );
+    return this.workbookVersionService.createWorkbookSubVersion(userId, role, body);
   }
 
   @Post('submit')

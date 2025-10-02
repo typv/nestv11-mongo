@@ -33,21 +33,6 @@ export class WorkbookVersion {
   @Prop({ type: String, required: true })
   name: string;
 
-  @Prop({ type: String, required: false })
-  appVersion?: string;
-
-  @Prop({ type: String, enum: LocaleType, required: true })
-  locale: LocaleType;
-
-  @Prop({ type: MongooseSchema.Types.Mixed, required: false })
-  styles: Record<string, Nullable<IStyleData>>;
-
-  @Prop({ type: Array, required: true })
-  sheetOrder: string[];
-
-  @Prop({ type: MongooseSchema.Types.Mixed, required: false })
-  resources: IResources;
-
   @Prop({ type: Number, required: true, default: 1 })
   version: number;
 
@@ -67,12 +52,6 @@ export class WorkbookVersion {
 
   @Prop({ type: Types.ObjectId, ref: 'Role', required: true })
   role: Role;
-
-  @Prop({ type: Types.ObjectId, ref: 'User', required: false })
-  submittedBy?: User;
-
-  @Prop({ type: Date, required: false })
-  submittedAt?: Date;
 
   @Prop({ type: String })
   snapshotFileKey?: string;

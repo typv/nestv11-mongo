@@ -24,13 +24,7 @@ export class VersionResponseDto {
   updatedAt: Date;
 
   @PropertyDto()
-  isCurrentActive: Boolean;
-
-  @PropertyDto()
-  submittedBy: string;
-
-  @PropertyDto()
-  submittedAt: Date;
+  isCurrentActive: boolean;
 
   @PropertyDto({
     type: SubVersionResponseDto,
