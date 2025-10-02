@@ -1,4 +1,10 @@
-import { GetObjectCommand, GetObjectCommandOutput, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import {
+  GetObjectCommand,
+  GetObjectCommandOutput,
+  HeadObjectCommand,
+  PutObjectCommand,
+  S3Client
+} from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigType } from '@nestjs/config';
@@ -148,8 +154,27 @@ export class AwsS3Service {
   async generatePresignedUrl(
     fileKey: string,
   ): Promise<string> {
+    const isExist = await this.checkFileExist(this.bucket, fileKey);
+    if (!isExist) return null;
+
     const command = new GetObjectCommand({ Bucket: this.bucket, Key: fileKey });
     const presignedUrl = await getAwsSignedUrl(this.s3Client, command, { expiresIn: 7200 });
     return presignedUrl;
+  }
+
+
+  async checkFileExist(bucket: string, fileKey: string): Promise<boolean> {
+    const params = {
+      Bucket: bucket,
+      Key: fileKey,
+    };
+
+    try {
+      await this.s3Client.send(new HeadObjectCommand(params));
+
+      return true;
+    } catch (error) {
+      return false;
+    }
   }
 }
