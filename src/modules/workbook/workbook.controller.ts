@@ -4,7 +4,7 @@ import { FormDataRequest } from 'nestjs-form-data';
 import { PaginationResponseDto } from 'src/common/dto';
 import {
   FindWorkbookListDto,
-  ImportWorkbookDto,
+  ImportWorkbookDto, ImportWorkbookResponseDto,
   WorkbookListResponseDto,
 } from 'src/modules/workbook/dto';
 import { WorkbookService } from './workbook.service';
@@ -36,7 +36,7 @@ export class WorkbookController {
     @User('id') userId: string,
     @User('role') role: RoleCode,
     @Body() body: ImportWorkbookDto,
-  ): Promise<SuccessResponseDto> {
+  ): Promise<ImportWorkbookResponseDto> {
     return this.workbookService.importWorkbook(userId, role, body);
   }
 
