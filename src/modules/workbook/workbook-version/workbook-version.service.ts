@@ -1,21 +1,21 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import { IWorkbookData, IWorksheetData } from '@univerjs/core';
+import { IWorkbookData } from '@univerjs/core';
 import { plainToInstance } from 'class-transformer';
 import { ClientSession, Connection, Model, Types } from 'mongoose';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Readable } from 'stream';
-import { error, Logger } from 'winston';
+import { Logger } from 'winston';
 import {
   CreateWorkbookSubVersionDto,
   ReviewWorkbookSubVersionDto,
   SubmitVersionDto,
-  UpdateWorkbookSubVersionDto,
-  VersionResponseDto
+  VersionResponseDto,
 } from './dto';
-import { ERROR_RESPONSE } from '../../../common/constants';
+import { ERROR_RESPONSE, fileExtensionConstant } from '../../../common/constants';
 import { SuccessResponseDto } from '../../../common/dto/success-response.dto';
 import { RoleCode } from '../../../common/enums';
+import { FileUtil } from '../../../common/utilities/file.util';
 import { JsonStreamUtil } from '../../../common/utilities/json-stream.util';
 import { ServerException } from '../../../exceptions';
 import {
@@ -29,10 +29,12 @@ import {
   WorkbookVersionDocument,
 } from '../../../models';
 import { BaseService } from '../../base.service';
+import { UploadService } from '../../upload';
 import {
   WorkbookApprovedStatus,
   WorkbookStage,
   WorkbookSubVersionStatus,
+  WorkbookSubVersionType,
   WorkbookVersionStatus,
 } from '../workbook.enum';
 import {
@@ -55,6 +57,7 @@ export class WorkbookVersionService extends BaseService {
     private workbookSubVersionModel: Model<WorkbookSubVersionDocument>,
     @InjectModel(Role.name) private roleModel: Model<RoleDocument>,
     private readonly awsS3Service: AwsS3Service,
+    private readonly uploadService: UploadService,
   ) {
     super();
     this.logger = this.logger.child({ context: WorkbookVersionService.name });
@@ -65,7 +68,15 @@ export class WorkbookVersionService extends BaseService {
     currentRole: RoleCode,
     body: CreateWorkbookSubVersionDto,
   ): Promise<SuccessResponseDto> {
-    const { workbookId } = body;
+    const { workbookId, file } = body;
+    let workbookSubVersionType: WorkbookSubVersionType;
+
+    const isValidExtension = FileUtil.isValidExtension(file, [
+      fileExtensionConstant.JSON,
+    ]);
+    if (!isValidExtension) {
+      throw new ServerException(ERROR_RESPONSE.INVALID_OBJECT('file extension'));
+    }
 
     const [workbook, role] = await Promise.all([
       this.workbookModel.findOne({
@@ -75,9 +86,6 @@ export class WorkbookVersionService extends BaseService {
     ]);
     if (!workbook) {
       throw new ServerException(ERROR_RESPONSE.OBJECT_NOT_FOUND('Workbook'));
-    }
-    if (!role) {
-      throw new ServerException(ERROR_RESPONSE.OBJECT_NOT_FOUND('Role'));
     }
 
     this.validatePermissions(currentRole, workbook.currentStage);
@@ -89,18 +97,36 @@ export class WorkbookVersionService extends BaseService {
       throw new ServerException(ERROR_RESPONSE.OBJECT_NOT_FOUND('Workbook version'));
     }
     const version = await this.getNextWorkbookSubVersion(workbookVersion);
-    const data = await this.extractDataFromFile(body.file);
+
+    if (currentRole === RoleCode.IMA) {
+      workbookSubVersionType = WorkbookSubVersionType.UpdateInputs;
+    }
+    if (currentRole === RoleCode.PMA) {
+      workbookSubVersionType = WorkbookSubVersionType.UpdateFormulas;
+    }
+
+    const parsedWorkbookData = await this.extractDataFromFile(file);
+    if (!parsedWorkbookData || !parsedWorkbookData.id) {
+      throw new ServerException(ERROR_RESPONSE.INVALID_OBJECT('json'));
+    }
+    const { fileKey: snapshotFileKey } = await this.uploadService.uploadFile(
+      file,
+      `workbooks/${parsedWorkbookData.id}/snapshots`,
+    );
 
     try {
       await this.workbookSubVersionModel.create({
         workbook: workbook._id,
         role: role._id,
         version: version,
-        changeSet: data,
         updatedBy: new Types.ObjectId(userId),
         updatedAt: new Date(),
         status: WorkbookSubVersionStatus.Pending,
         workbookVersion: workbookVersion._id,
+        type: workbookSubVersionType,
+        snapshotFileKey: snapshotFileKey,
+        submittedBy: new Types.ObjectId(userId),
+        submittedAt: new Date(),
       });
 
       return this.responseSuccess();
@@ -121,57 +147,11 @@ export class WorkbookVersionService extends BaseService {
     }
   }
 
-  async updateWorkbookSubVersion(
-    userId: string,
-    workbookSubVersionId: string,
-    body: UpdateWorkbookSubVersionDto,
-  ) {
-    const workbookSubVersion = await this.workbookSubVersionModel.findOne({
-      _id: new Types.ObjectId(workbookSubVersionId),
-      updatedBy: new Types.ObjectId(userId),
-      status: WorkbookSubVersionStatus.Rejected,
-    });
-    if (!workbookSubVersion) {
-      throw new ServerException(ERROR_RESPONSE.OBJECT_NOT_FOUND('Workbook sub version'));
-    }
-
-    const parsedWorkbookData = await this.extractDataFromFile(body.file);
-    try {
-      await this.workbookSubVersionModel.updateOne(
-        { _id: new Types.ObjectId(workbookSubVersionId) },
-        {
-          $set: {
-            changeSet: parsedWorkbookData,
-            updatedAt: new Date(),
-            status: WorkbookSubVersionStatus.Pending,
-            rejectedReason: null,
-          },
-        },
-      );
-
-      return this.responseSuccess();
-    } catch (error: unknown) {
-      this.logger.error({
-        message:
-          'WorkbookService.updateWorkbookSubVersion: Failed to update workbook sub version',
-        context: 'WorkbookService.updateWorkbookSubVersion',
-        error: error,
-      });
-    }
-    if (error instanceof ServerException) {
-      throw error;
-    }
-    throw new ServerException({
-      ...ERROR_RESPONSE.BAD_REQUEST,
-      message: 'Failed to update workbook sub version',
-    });
-  }
-
   async submitWorkbookVersion(
     currentRole: RoleCode,
     body: SubmitVersionDto,
   ): Promise<SuccessResponseDto> {
-    const { workbookId } = body;
+    const { workbookId, file } = body;
     const session = await this.connection.startSession();
     session.startTransaction();
 
@@ -244,11 +224,18 @@ export class WorkbookVersionService extends BaseService {
     );
     this.validatePermissions(currentRole, workbook.currentStage);
 
-    const parsedWorkbookData = await this.extractDataFromFile(body.file);
+    const parsedWorkbookData = await this.extractDataFromFile(file);
+    if (!parsedWorkbookData || !parsedWorkbookData.id) {
+      throw new ServerException(ERROR_RESPONSE.INVALID_OBJECT('json'));
+    }
+    const { fileKey: snapshotFileKey } = await this.uploadService.uploadFile(
+      body.file,
+      `workbooks/${parsedWorkbookData.id}/snapshots`,
+    );
     try {
       if (currentRole === RoleCode.IMA) {
         await this.submitWorkbookVersionByIMA(
-          parsedWorkbookData,
+          snapshotFileKey,
           currentWorkbookVersion,
           workbook,
           session,
@@ -256,7 +243,7 @@ export class WorkbookVersionService extends BaseService {
       }
       if (currentRole === RoleCode.IMS) {
         await this.submitWorkbookVersionByIMS(
-          parsedWorkbookData,
+          snapshotFileKey,
           currentWorkbookVersion,
           workbook,
           session,
@@ -267,7 +254,7 @@ export class WorkbookVersionService extends BaseService {
       }
       if (currentRole === RoleCode.PMS) {
         await this.submitWorkbookVersionByPMS(
-          parsedWorkbookData,
+          snapshotFileKey,
           currentWorkbookVersion,
           workbook,
           session,
@@ -346,10 +333,11 @@ export class WorkbookVersionService extends BaseService {
         { session },
       );
       if (status === WorkbookSubVersionStatus.Approved) {
-        if (currentReviewRole === RoleCode.IMS) {
-          await this.duplicateWorkbookSubVersionToIMS(
+        if ([RoleCode.IMS, RoleCode.PMA].includes(currentReviewRole)) {
+          await this.duplicateWorkbookSubVersion(
             userId,
             workbookSubVersion,
+            currentReviewRole,
             session,
           );
         }
@@ -385,6 +373,7 @@ export class WorkbookVersionService extends BaseService {
         await JsonStreamUtil.processJsonStreamSimple<IWorkbookData>(jsonStream);
 
       return {
+        id: data?.id,
         name: data?.name,
         appVersion: data?.appVersion,
         locale: data?.locale,
@@ -405,35 +394,25 @@ export class WorkbookVersionService extends BaseService {
   }
 
   private async submitWorkbookVersionByIMA(
-    data: Partial<IWorkbookData>,
+    snapshotFileKey: string,
     currentWorkbookVersion: WorkbookVersionDocument,
     workbook: WorkbookDocument,
     session: ClientSession,
   ) {
     const imsRole = await this.roleModel.findOne({ code: RoleCode.IMS });
     await this.createNewWorkbookVersion(
-      data,
+      snapshotFileKey,
       workbook,
       currentWorkbookVersion,
       imsRole,
       session,
     );
 
-    return this.workbookModel.updateOne(
-      {
-        _id: workbook._id,
-      },
-      {
-        $set: {
-          currentStage: WorkbookStage.IMS_REVIEW,
-        },
-      },
-      { session },
-    );
+    return this.updateWorkbookStage(workbook._id, WorkbookStage.IMS_REVIEW, session);
   }
 
   private async submitWorkbookVersionByIMS(
-    data: Partial<IWorkbookData>,
+    snapshotFileKey: string,
     currentWorkbookVersion: WorkbookVersionDocument,
     workbook: WorkbookDocument,
     session: ClientSession,
@@ -454,7 +433,7 @@ export class WorkbookVersionService extends BaseService {
     } else {
       const pmaRole = await this.roleModel.findOne({ code: RoleCode.PMA });
       await this.createNewWorkbookVersion(
-        data,
+        snapshotFileKey,
         workbook,
         currentWorkbookVersion,
         pmaRole,
@@ -513,21 +492,11 @@ export class WorkbookVersionService extends BaseService {
       }
     }
 
-    return this.workbookModel.updateOne(
-      {
-        _id: workbook._id,
-      },
-      {
-        $set: {
-          currentStage: newStage,
-        },
-      },
-      { session },
-    );
+    return this.updateWorkbookStage(workbook._id, newStage, session);
   }
 
   private async submitWorkbookVersionByPMS(
-    data: Partial<IWorkbookData>,
+    snapshotFileKey: string,
     currentWorkbookVersion: WorkbookVersionDocument,
     workbook: WorkbookDocument,
     session: ClientSession,
@@ -543,7 +512,7 @@ export class WorkbookVersionService extends BaseService {
     } else {
       const pmsRole = await this.roleModel.findOne({ code: RoleCode.PMS });
       await this.createNewWorkbookVersion(
-        data,
+        snapshotFileKey,
         workbook,
         currentWorkbookVersion,
         pmsRole,
@@ -553,23 +522,18 @@ export class WorkbookVersionService extends BaseService {
       newStage = WorkbookStage.COMPLETED;
     }
 
-    return this.workbookModel.updateOne(
-      {
-        _id: workbook._id,
-      },
-      {
-        $set: {
-          currentStage: newStage,
-          approvedStatus: WorkbookApprovedStatus.Approved,
-        },
-      },
-      { session },
+    return this.updateWorkbookStage(
+      workbook._id,
+      newStage,
+      session,
+      WorkbookApprovedStatus.Approved,
     );
   }
 
-  private async duplicateWorkbookSubVersionToIMS(
+  private async duplicateWorkbookSubVersion(
     reviewerId: string,
     workbookSubVersion: WorkbookSubVersionDocument,
+    currentReviewRole: RoleCode,
     session: ClientSession,
   ) {
     const [workbookVersion] = <WorkbookVersionDocument[]>await this.workbookVersionModel
@@ -584,7 +548,7 @@ export class WorkbookVersionService extends BaseService {
           },
         },
         { $unwind: '$role' },
-        { $match: { 'role.code': RoleCode.IMS } },
+        { $match: { 'role.code': currentReviewRole } },
         { $limit: 1 },
         {
           $project: {
@@ -600,12 +564,13 @@ export class WorkbookVersionService extends BaseService {
       [
         {
           version: version,
-          changeSet: workbookSubVersion.changeSet,
           status: WorkbookSubVersionStatus.Pending,
           workbook: workbookSubVersion.workbook,
           workbookVersion: workbookVersion._id,
           updatedBy: new Types.ObjectId(reviewerId),
           updatedAt: new Date(),
+          type: WorkbookSubVersionType.UpdateInputs,
+          snapshotFileKey: workbookSubVersion.snapshotFileKey,
         },
       ],
       { session },
@@ -752,18 +717,18 @@ export class WorkbookVersionService extends BaseService {
   }
 
   private async createNewWorkbookVersion(
-    data: Partial<IWorkbookData>,
+    snapshotFileKey: string,
     workbook: WorkbookDocument,
     currentWorkbookVersion: WorkbookVersionDocument,
     role: RoleDocument,
     session: ClientSession,
   ) {
     const newVersion = currentWorkbookVersion.version + 1;
-    const newWorkbookVersionResult = await this.workbookVersionModel.findOneAndUpdate(
+    await this.workbookVersionModel.findOneAndUpdate(
       { workbook: workbook._id, version: newVersion },
       {
         $setOnInsert: {
-          ...data,
+          name: currentWorkbookVersion.name,
           version: newVersion,
           workbook: workbook._id,
           status:
@@ -771,6 +736,7 @@ export class WorkbookVersionService extends BaseService {
               ? WorkbookVersionStatus.Awaiting
               : WorkbookVersionStatus.Approved,
           role: role._id,
+          snapshotFileKey: snapshotFileKey,
         },
         $set: {
           isCurrentActive: true,
@@ -780,27 +746,8 @@ export class WorkbookVersionService extends BaseService {
         upsert: true,
         new: true,
         session,
-        runValidators: true,
-        includeResultMetadata: true,
       },
     );
-    const {
-      value: newWorkbookVersion,
-      lastErrorObject: { updatedExisting },
-    } = newWorkbookVersionResult;
-
-    if (!updatedExisting) {
-      const { sheets } = data;
-      const sheetsData = Object.values(sheets);
-      const worksheetsDocs = sheetsData.map((sheet: IWorksheetData) => {
-        return {
-          ...sheet,
-          workbook: workbook._id,
-          univerWorksheetId: sheet.id,
-          workbookVersion: newWorkbookVersion._id,
-        };
-      });
-    }
 
     if (role.code !== RoleCode.PMS) {
       await this.setWorkbookVersionStatusForApprovedWorkbookSubVersion(
@@ -1063,5 +1010,25 @@ export class WorkbookVersionService extends BaseService {
     return {
       presignedURL: result,
     };
+  }
+
+  private async updateWorkbookStage(
+    workbookId: Types.ObjectId,
+    stage: WorkbookStage,
+    session: ClientSession,
+    approvedStatus?: WorkbookApprovedStatus,
+  ) {
+    return this.workbookModel.updateOne(
+      {
+        _id: workbookId,
+      },
+      {
+        $set: {
+          currentStage: stage,
+          ...(approvedStatus && { approvedStatus }),
+        },
+      },
+      { session },
+    );
   }
 }

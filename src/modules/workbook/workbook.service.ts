@@ -102,13 +102,11 @@ export class WorkbookService extends BaseService {
       await this.workbookVersionModel.create(
         [
           {
-            ...workbookData,
+            name: workbookData.name,
             workbook: workbook._id,
             version,
             role: roleDoc._id,
             status: WorkbookVersionStatus.Awaiting,
-            submittedBy: new Types.ObjectId(userId),
-            submittedAt: new Date(),
             snapshotFileKey: uploadResponse.fileKey,
           },
         ],

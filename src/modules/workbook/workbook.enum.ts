@@ -29,3 +29,8 @@ export enum WorkbookStage {
   PMS_REVIEW_FORMULAS = 'PMS_REVIEW_FORMULAS',
   COMPLETED = 'COMPLETED',
 }
+
+export enum WorkbookSubVersionType {
+  UpdateInputs = 'Update Inputs',
+  UpdateFormulas = 'Update Formulas',
+}
