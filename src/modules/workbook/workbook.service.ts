@@ -7,7 +7,7 @@ import { Readable } from 'node:stream';
 import { PaginationResponseDto } from 'src/common/dto';
 import { JsonStreamUtil } from 'src/common/utilities/json-stream.util';
 import { Logger } from 'winston';
-import { FindWorkbookListDto, ImportWorkbookDto, WorkbookListResponseDto } from './dto';
+import { FindWorkbookListDto, ImportWorkbookDto, ImportWorkbookResponseDto, WorkbookListResponseDto } from './dto';
 import { ERROR_RESPONSE, fileExtensionConstant } from '../../common/constants';
 import { SuccessResponseDto } from '../../common/dto/success-response.dto';
 import { RoleCode } from '../../common/enums';
@@ -44,7 +44,7 @@ export class WorkbookService extends BaseService {
     userId: string,
     role: RoleCode,
     body: ImportWorkbookDto,
-  ): Promise<SuccessResponseDto> {
+  ): Promise<ImportWorkbookResponseDto> {
     const { file } = body;
 
     const isValidExtension = FileUtil.isValidExtension(file, [fileExtensionConstant.JSON]);
@@ -116,7 +116,10 @@ export class WorkbookService extends BaseService {
       );
       await session.commitTransaction();
 
-      return this.responseSuccess();
+      return {
+        workbookId: workbook._id.toString(),
+        univerWorkbookId,
+      };
     } catch (error: unknown) {
       await session.abortTransaction();
       this.logger.error({
