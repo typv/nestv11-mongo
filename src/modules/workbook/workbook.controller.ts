@@ -25,6 +25,7 @@ export class WorkbookController {
   @SwaggerApiDocument({
     response: {
       status: HttpStatus.OK,
+      type: ImportWorkbookResponseDto,
     },
     body: { type: ImportWorkbookDto, required: true },
     operation: {
