@@ -138,11 +138,17 @@ export class AwsS3Service {
     }
   }
 
+  /**
+   * Generates a pre-signed URL for downloading an object from the S3 bucket.
+   * The resulting URL can be used by any client (e.g., frontend) to perform
+   * an unauthenticated GET request for a limited time.
+   * * @param fileKey The full path and name of the object in the bucket (e.g., 'images/user-id/photo.jpg').
+   * @returns A promise that resolves to the pre-signed download URL string.
+   */
   async generatePresignedUrl(
     fileKey: string,
-    contentType: string = APP_DEFAULTS.CONTENT_TYPE_DEFAULT,
   ): Promise<string> {
-    const command = new PutObjectCommand({ Bucket: this.bucket, Key: fileKey, ContentType: contentType });
+    const command = new GetObjectCommand({ Bucket: this.bucket, Key: fileKey });
     const presignedUrl = await getAwsSignedUrl(this.s3Client, command, { expiresIn: 7200 });
     return presignedUrl;
   }
