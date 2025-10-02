@@ -1057,16 +1057,11 @@ export class WorkbookVersionService extends BaseService {
       .exec();
     if (!subVersion) throw new ServerException(ERROR_RESPONSE.OBJECT_NOT_FOUND('Sub version'));
 
-    try {
-      const result = await this.awsS3Service.generatePresignedUrl(subVersion?.snapshotFileKey);
+    const result = await this.awsS3Service.generatePresignedUrl(subVersion?.snapshotFileKey);
+    if (!result) throw new ServerException(ERROR_RESPONSE.OBJECT_NOT_FOUND('Snapshot'));
 
-      return {
-        presignedURL: result,
-      };
-    } catch (error) {
-      this.logger.error('getSubversionSnapshot', error);
-
-      throw new ServerException(ERROR_RESPONSE.RESOURCE_NOT_FOUND);
-    }
+    return {
+      presignedURL: result,
+    };
   }
 }
