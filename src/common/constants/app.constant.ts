@@ -26,5 +26,6 @@ export const APP_DEFAULTS = {
   UTC_TZ: 'UTC',
   RECURRING_DURATION: {
     AVAILABILITY_MAX_MONTH: 6,
-  }
+  },
+  CONTENT_TYPE_DEFAULT: 'application/json',
 };

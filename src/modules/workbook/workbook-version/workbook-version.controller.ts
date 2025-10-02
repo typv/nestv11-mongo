@@ -13,6 +13,9 @@ import { SuccessResponseDto } from '../../../common/dto/success-response.dto';
 import { RoleCode } from '../../../common/enums';
 import { RoleBaseAccessControl, SwaggerApiDocument, User } from '../../../decorators';
 import { Response } from 'express';
+import {
+  WorkbookVersionSnapshotResponseDto
+} from 'src/modules/workbook/workbook-version/dto/response/workbook-version-snapshot-response.dto';
 
 @Controller('workbook/version')
 @ApiTags('Workbook Version')
@@ -151,7 +154,7 @@ export class WorkbookVersionController {
   @SwaggerApiDocument({
     response: {
       status: HttpStatus.OK,
-      type: Buffer,
+      type: WorkbookVersionSnapshotResponseDto,
     },
     operation: {
       operationId: 'subversionSnapshot',
@@ -159,13 +162,9 @@ export class WorkbookVersionController {
       description: 'Get Subversion Snapshot',
     },
   })
-  @ApiProduces('application/json')
   async getSubversionSnapshot(
     @Param('subVersionId') subVersionId: string,
-    @Res() res: Response
-  ): Promise<any> {
-    const fileBuffer = await this.workbookVersionService.getSubversionSnapshot(subVersionId);
-    res.setHeader('Content-Type', 'application/json');
-    res.status(HttpStatus.OK).send(fileBuffer);
+  ): Promise<WorkbookVersionSnapshotResponseDto> {
+    return this.workbookVersionService.getSubversionSnapshot(subVersionId);
   }
 }
