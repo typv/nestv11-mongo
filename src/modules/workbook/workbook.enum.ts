@@ -34,3 +34,10 @@ export enum WorkbookSubVersionType {
   UpdateInputs = 'Update Inputs',
   UpdateFormulas = 'Update Formulas',
 }
+
+export enum WorkbookSubVersionTeam {
+  IMA = 'IMA',
+  IMS = 'IMS',
+  PMA = 'PMA',
+  PMS = 'PMS',
+}

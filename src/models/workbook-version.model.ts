@@ -1,11 +1,12 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { IResources, IStyleData, Nullable } from '@univerjs/core';
-import { HydratedDocument, Schema as MongooseSchema, Types } from 'mongoose';
+import { HydratedDocument, Types } from 'mongoose';
+import {
+  WorkbookPermission,
+  WorkbookVersionStatus,
+} from 'src/modules/workbook/workbook.enum';
 import { Role } from './role.model';
 import { User } from './user.model';
 import { Workbook } from './workbook.model';
-import { LocaleType } from '../modules/workbook/dto';
-import { WorkbookPermission, WorkbookVersionStatus } from 'src/modules/workbook/workbook.enum';
 
 @Schema({ _id: false })
 export class Collaborator {
@@ -52,6 +53,12 @@ export class WorkbookVersion {
 
   @Prop({ type: Types.ObjectId, ref: 'Role', required: true })
   role: Role;
+
+  @Prop({ type: Types.ObjectId, ref: 'User', required: false })
+  submittedBy?: User;
+
+  @Prop({ type: Date, required: false })
+  submittedAt?: Date;
 
   @Prop({ type: String })
   snapshotFileKey?: string;
