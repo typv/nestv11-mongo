@@ -1,6 +1,16 @@
-import mongoose, { Aggregate, FilterQuery, Model, Query, UpdateQuery } from 'mongoose';
+import mongoose, {
+  Aggregate,
+  FilterQuery,
+  Model,
+  Query,
+  UpdateQuery,
+  UpdateWriteOpResult,
+  QueryOptions,
+  MongooseUpdateQueryOptions,
+  DeleteResult,
+  CreateOptions,
+} from 'mongoose';
 import { BaseDocument } from 'src/models/base.model';
-import { QueryOptions } from 'winston';
 import { APP_DEFAULTS } from 'src/common/constants';
 import { PaginationResponseDto } from 'src/common/dto';
 
@@ -32,6 +42,25 @@ export abstract class BaseRepository<T, D extends BaseDocument<T>> {
     return this.model
       .findByIdAndUpdate(id, update, { new: true })
       .exec();
+  }
+
+  async updateOne(
+    filter: FilterQuery<D>,
+    update: UpdateQuery<D>,
+    options?: MongooseUpdateQueryOptions,
+  ): Promise<UpdateWriteOpResult> {
+    return this.model.updateOne(filter, update, options).exec();
+  }
+
+  async deleteOne(
+    filter: FilterQuery<D>,
+    options?: MongooseUpdateQueryOptions,
+  ): Promise<DeleteResult> {
+    return this.model.deleteOne(filter, options).exec();
+  }
+
+  async create(data: any, options?: CreateOptions): Promise<any> {
+    return this.model.create(data, options);
   }
 
   public getModel(): Model<D> {

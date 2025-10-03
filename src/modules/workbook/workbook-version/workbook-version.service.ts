@@ -785,7 +785,12 @@ export class WorkbookVersionService extends BaseService {
               ],
             },
           },
-          { $unwind: '$role' },
+          {
+            $unwind: {
+              path: '$role',
+              preserveNullAndEmptyArrays: true,
+            },
+          },
           {
             $lookup: {
               from: 'roles',
@@ -794,7 +799,12 @@ export class WorkbookVersionService extends BaseService {
               as: 'role',
             },
           },
-          { $unwind: '$role' },
+          {
+            $unwind: {
+              path: '$role',
+              preserveNullAndEmptyArrays: true,
+            },
+          },
           {
             $lookup: {
               from: 'users',
@@ -803,7 +813,12 @@ export class WorkbookVersionService extends BaseService {
               as: 'submittedBy',
             },
           },
-          { $unwind: '$submittedBy' },
+          {
+            $unwind: {
+              path: '$submittedBy',
+              preserveNullAndEmptyArrays: true,
+            },
+          },
           {
             $project: {
               _id: 0,

@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigType } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
-import { MongooseModule } from '@nestjs/mongoose';
 import {
   chatConfiguration,
   codeExpiresConfiguration,
@@ -11,17 +10,13 @@ import { AuthStrategy, RefreshTokenStrategy } from 'src/modules/auth/strategies'
 import { GoogleAuthModule } from 'src/modules/base/google-auth';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { Role, RoleSchema, User, UserSchema } from '../../models';
+import { RoleDAModule, UserDAModule } from 'src/repositories';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       load: [jwtConfiguration, codeExpiresConfiguration, chatConfiguration],
     }),
-    MongooseModule.forFeature([
-      { name: User.name, schema: UserSchema },
-      { name: Role.name, schema: RoleSchema },
-    ]),
     JwtModule.registerAsync({
       imports: [ConfigModule.forFeature(jwtConfiguration)],
       useFactory: (jwtConfig: ConfigType<typeof jwtConfiguration>) => ({
@@ -34,6 +29,8 @@ import { Role, RoleSchema, User, UserSchema } from '../../models';
       inject: [jwtConfiguration.KEY],
     }),
     GoogleAuthModule,
+    UserDAModule,
+    RoleDAModule
   ],
   controllers: [AuthController],
   providers: [AuthService, AuthStrategy, RefreshTokenStrategy],

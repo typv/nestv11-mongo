@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
 import { plainToInstance } from 'class-transformer';
 import mongoose, { FilterQuery, Model } from 'mongoose';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
@@ -14,22 +13,23 @@ import {
 import { ERROR_RESPONSE } from '../../common/constants';
 import { SuccessResponseDto } from '../../common/dto/success-response.dto';
 import { ServerException } from '../../exceptions';
-import { User, UserDocument } from '../../models';
 import { UploadService } from '../upload';
+import { UserRepository } from 'src/repositories';
+import { UserDocument } from 'src/models';
 
 @Injectable()
 export class UserService extends BaseService {
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
-    @InjectModel(User.name) private userModel: Model<UserDocument>,
     private readonly uploadService: UploadService,
+    private readonly userRepository: UserRepository,
   ) {
     super();
     this.logger = this.logger.child({ context: UserService.name });
   }
 
-  async getUserByOrThrow(where: FilterQuery<UserDocument>) {
-    const user = await this.userModel.findOne(where).exec();
+  async getUserByOrThrow(where: FilterQuery<UserDocument>): Promise<UserDocument> {
+    const user = await this.userRepository.findOne(where);
     if (!user) {
       throw new ServerException(ERROR_RESPONSE.USER_NOT_FOUND);
     }
@@ -38,8 +38,7 @@ export class UserService extends BaseService {
   }
 
   async getUserInformation(userId: string) {
-    const _id = new mongoose.Types.ObjectId(userId);
-    const user = await this.userModel.findById(_id).exec();
+    const user = await this.userRepository.findById(userId);
     if (!user) {
       throw new ServerException(ERROR_RESPONSE.USER_NOT_FOUND);
     }
@@ -53,10 +52,7 @@ export class UserService extends BaseService {
   }
 
   async getMyInformation(id: string) {
-    const _id = new mongoose.Types.ObjectId(id);
-    const user = await this.userModel.findById(_id)
-      .populate('role')
-      .exec();
+    const user = await this.userRepository.findOneUserAndRole(id);
     if (!user) {
       throw new ServerException(ERROR_RESPONSE.USER_NOT_FOUND);
     }
@@ -76,7 +72,7 @@ export class UserService extends BaseService {
       _id: new mongoose.Types.ObjectId(userId),
     });
 
-    await this.userModel.updateOne({ _id: user._id }, { $set: body });
+    await this.userRepository.updateOne({ _id: user._id }, { $set: body });
 
     return { success: true };
   }
@@ -87,28 +83,23 @@ export class UserService extends BaseService {
     });
 
     const fileUrl = await this.uploadService.uploadFile(file, 'avatar');
-    await this.userModel.updateOne({ _id: user._id }, { $set: { avatar: fileUrl } });
+    await this.userRepository.updateOne({ _id: user._id }, { $set: { avatar: fileUrl } });
 
     return { success: true };
   }
 
   async deleteAccount(userId: string): Promise<SuccessResponseDto> {
-    const user = await this.userModel.findOne({
-      _id: new mongoose.Types.ObjectId(userId),
-    });
+    const user = await this.userRepository.findById(userId);
     if (!user) {
       throw new ServerException(ERROR_RESPONSE.USER_NOT_FOUND);
     }
 
-    await this.userModel.deleteOne({ _id: user._id });
+    await this.userRepository.deleteOne({ _id: user._id });
     return this.responseSuccess();
   }
 
   async listUsers(): Promise<GetUserInformationResponseDto[]> {
-    const users = await this.userModel.find()
-      .populate('role')
-      .lean()
-      .exec();
+    const users = await this.userRepository.findUserAndRole();
 
     return users.map((user) =>
       plainToInstance(GetUserInformationResponseDto,{
