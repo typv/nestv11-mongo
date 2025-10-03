@@ -17,10 +17,10 @@ export class ReviewWorkbookSubVersionDto {
   status: WorkbookSubVersionStatus;
 
   @ApiProperty({
-    description: 'Rejected Reason',
-    example: 'Rejected Reason',
+    description: 'Comment',
+    example: 'Comment',
   })
   @IsString()
   @IsOptional()
-  rejectedReason?: string;
+  comment?: string;
 }

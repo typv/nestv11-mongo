@@ -9,6 +9,26 @@ import { User } from './user.model';
 import { Workbook } from './workbook.model';
 import { BaseDocument, BaseModel } from 'src/models/base.model';
 
+@Schema({ _id: false })
+export class TeamReviewInfo {
+  @Prop({
+    type: String,
+    enum: WorkbookSubVersionStatus,
+    required: true,
+    default: WorkbookSubVersionStatus.Pending,
+  })
+  status: WorkbookSubVersionStatus;
+
+  @Prop({ type: String, required: false, default: null })
+  comment?: string;
+
+  @Prop({ type: Types.ObjectId, ref: 'User', required: false, default: null })
+  reviewedBy?: User;
+
+  @Prop({ type: Date, required: false, default: null })
+  reviewedAt?: Date;
+}
+
 export type WorkbookSubVersionDocument = BaseDocument<WorkbookSubVersion>;
 
 @Schema({ timestamps: true, collection: 'workbook-sub-versions' })
@@ -22,23 +42,6 @@ export class WorkbookSubVersion extends BaseModel {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   updatedBy: User;
 
-  @Prop({
-    type: String,
-    enum: WorkbookSubVersionStatus,
-    required: true,
-    default: WorkbookSubVersionStatus.Pending,
-  })
-  status: WorkbookSubVersionStatus;
-
-  @Prop({ type: String, required: false })
-  rejectedReason: string;
-
-  @Prop({ type: Types.ObjectId, ref: 'User', required: false, default: null })
-  reviewedBy?: User;
-
-  @Prop({ type: Date, required: false, default: null })
-  reviewedAt?: Date;
-
   @Prop({ type: Types.ObjectId, ref: 'Workbook', required: true })
   workbook: Workbook;
 
@@ -50,6 +53,30 @@ export class WorkbookSubVersion extends BaseModel {
 
   @Prop({ type: String, enum: WorkbookSubVersionTeam, required: true })
   team: WorkbookSubVersionTeam;
+
+  @Prop({
+    type: TeamReviewInfo,
+    required: true,
+    default: () => ({ status: WorkbookSubVersionStatus.Pending }),
+  })
+  imsReview: TeamReviewInfo;
+
+  @Prop({
+    type: TeamReviewInfo,
+    required: true,
+    default: () => ({ status: WorkbookSubVersionStatus.Pending }),
+  })
+  pmaReview: TeamReviewInfo;
+
+  @Prop({
+    type: TeamReviewInfo,
+    required: true,
+    default: () => ({ status: WorkbookSubVersionStatus.Pending }),
+  })
+  pmsReview: TeamReviewInfo;
+
+  @Prop({ type: Boolean, required: true, default: true })
+  isActive: boolean;
 }
 
 export const WorkbookSubVersionSchema = SchemaFactory.createForClass(WorkbookSubVersion);

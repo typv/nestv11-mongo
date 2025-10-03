@@ -11,6 +11,7 @@ import { Readable } from 'stream';
 import { Logger } from 'winston';
 import {
   CreateWorkbookSubVersionDto,
+  CreateWorkbookSubVersionResponseDto,
   ReviewWorkbookSubVersionDto,
   SubmitVersionDto,
   VersionResponseDto,
@@ -24,6 +25,7 @@ import { ServerException } from '../../../exceptions';
 import {
   Role,
   RoleDocument,
+  TeamReviewInfo,
   Workbook,
   WorkbookDocument,
   WorkbookSubVersion,
@@ -64,7 +66,7 @@ export class WorkbookVersionService extends BaseService {
     userId: string,
     currentRole: RoleCode,
     body: CreateWorkbookSubVersionDto,
-  ): Promise<SuccessResponseDto> {
+  ): Promise<CreateWorkbookSubVersionResponseDto> {
     const { workbookId, file, changeSet } = body;
     let workbookSubVersionType: WorkbookSubVersionType;
 
@@ -103,7 +105,7 @@ export class WorkbookVersionService extends BaseService {
     );
 
     try {
-      await this.workbookSubVersionModel.create({
+      const newWorkbookSubVersion = await this.workbookSubVersionModel.create({
         workbook: workbook._id,
         role: role._id,
         version: version,
@@ -118,7 +120,9 @@ export class WorkbookVersionService extends BaseService {
             : WorkbookSubVersionTeam.PMA,
       });
 
-      return this.responseSuccess();
+      return {
+        workbookSubVersionId: newWorkbookSubVersion._id.toString(),
+      };
     } catch (error: unknown) {
       this.logger.error({
         message:
@@ -136,222 +140,229 @@ export class WorkbookVersionService extends BaseService {
     }
   }
 
-  // async submitWorkbookVersion(
-  //   currentRole: RoleCode,
-  //   body: SubmitVersionDto,
-  // ): Promise<SuccessResponseDto> {
-  //   const { workbookId, file } = body;
-  //   const session = await this.connection.startSession();
-  //   session.startTransaction();
+  async submitWorkbookVersion(
+    currentRole: RoleCode,
+    body: SubmitVersionDto,
+  ): Promise<SuccessResponseDto> {
+    const { workbookId, file } = body;
+    const session = await this.connection.startSession();
+    session.startTransaction();
 
-  //   const [currentWorkbookVersion] = <WorkbookVersionDocument[]>(
-  //     await this.workbookVersionModel
-  //       .aggregate([
-  //         {
-  //           $match: {
-  //             workbook: new Types.ObjectId(workbookId),
-  //             isCurrentActive: true,
-  //           },
-  //         },
-  //         {
-  //           $lookup: {
-  //             from: 'roles',
-  //             localField: 'role',
-  //             foreignField: '_id',
-  //             as: 'role',
-  //           },
-  //         },
-  //         { $unwind: '$role' },
-  //         {
-  //           $match: {
-  //             'role.code': currentRole === RoleCode.PMS ? RoleCode.PMA : currentRole,
-  //           },
-  //         },
-  //         {
-  //           $lookup: {
-  //             from: 'workbooks',
-  //             localField: 'workbook',
-  //             foreignField: '_id',
-  //             as: 'workbook',
-  //           },
-  //         },
-  //         { $unwind: '$workbook' },
-  //         { $limit: 1 },
-  //         {
-  //           $project: {
-  //             _id: 1,
-  //             version: 1,
-  //             status: 1,
-  //             isCurrentActive: 1,
-  //             role: {
-  //               _id: 1,
-  //               code: 1,
-  //             },
-  //             workbook: {
-  //               _id: 1,
-  //               name: 1,
-  //               currentStage: 1,
-  //             },
-  //           },
-  //         },
-  //       ])
-  //       .session(session)
-  //       .exec()
-  //   );
-  //   if (!currentWorkbookVersion) {
-  //     throw new ServerException(ERROR_RESPONSE.OBJECT_NOT_FOUND('Workbook version'));
-  //   }
-  //   if (!currentWorkbookVersion.isCurrentActive) {
-  //     throw new ServerException(ERROR_RESPONSE.WORKBOOK_VERSION_NOT_CURRENT_ACTIVE);
-  //   }
-  //   const workbook = currentWorkbookVersion.workbook as WorkbookDocument;
-  //   await this.validateSubmittedWorkbookVersion(
-  //     currentWorkbookVersion,
-  //     workbook,
-  //     currentRole,
-  //     session,
-  //   );
-  //   this.validatePermissions(currentRole, workbook.currentStage);
+    const [currentWorkbookVersion] = <WorkbookVersionDocument[]>(
+      await this.workbookVersionModel
+        .aggregate([
+          {
+            $match: {
+              workbook: new Types.ObjectId(workbookId),
+            },
+          },
+          {
+            $lookup: {
+              from: 'roles',
+              localField: 'role',
+              foreignField: '_id',
+              as: 'role',
+            },
+          },
+          { $unwind: '$role' },
+          {
+            $match: {
+              // PMA submit do not create version for PMS -> just submit for PMA to create main version
+              'role.code': currentRole === RoleCode.PMS ? RoleCode.PMA : currentRole,
+            },
+          },
+          {
+            $lookup: {
+              from: 'workbooks',
+              localField: 'workbook',
+              foreignField: '_id',
+              as: 'workbook',
+            },
+          },
+          { $unwind: '$workbook' },
+          { $limit: 1 },
+          {
+            $project: {
+              _id: 1,
+              name: 1,
+              version: 1,
+              status: 1,
+              isCurrentActive: 1,
+              role: {
+                _id: 1,
+                code: 1,
+              },
+              workbook: {
+                _id: 1,
+                name: 1,
+                currentStage: 1,
+              },
+            },
+          },
+        ])
+        .session(session)
+        .exec()
+    );
+    if (!currentWorkbookVersion) {
+      throw new ServerException(ERROR_RESPONSE.OBJECT_NOT_FOUND('Workbook version'));
+    }
+    if (!currentWorkbookVersion.isCurrentActive) {
+      throw new ServerException(ERROR_RESPONSE.WORKBOOK_VERSION_NOT_CURRENT_ACTIVE);
+    }
+    const workbook = currentWorkbookVersion.workbook as WorkbookDocument;
+    this.validatePermissions(currentRole, workbook.currentStage);
 
-  //   const parsedWorkbookData = await this.extractDataFromFile(file);
-  //   if (!parsedWorkbookData || !parsedWorkbookData.id) {
-  //     throw new ServerException(ERROR_RESPONSE.INVALID_OBJECT('json'));
-  //   }
-  //   const { fileKey: snapshotFileKey } = await this.uploadService.uploadFile(
-  //     body.file,
-  //     `workbooks/${parsedWorkbookData.id}/snapshots`,
-  //   );
-  //   try {
-  //     if (currentRole === RoleCode.IMA) {
-  //       await this.submitWorkbookVersionByIMA(
-  //         snapshotFileKey,
-  //         currentWorkbookVersion,
-  //         workbook,
-  //         session,
-  //       );
-  //     }
-  //     if (currentRole === RoleCode.IMS) {
-  //       await this.submitWorkbookVersionByIMS(
-  //         snapshotFileKey,
-  //         currentWorkbookVersion,
-  //         workbook,
-  //         session,
-  //       );
-  //     }
-  //     if (currentRole === RoleCode.PMA) {
-  //       await this.submitWorkbookVersionByPMA(currentWorkbookVersion, workbook, session);
-  //     }
-  //     if (currentRole === RoleCode.PMS) {
-  //       await this.submitWorkbookVersionByPMS(
-  //         snapshotFileKey,
-  //         currentWorkbookVersion,
-  //         workbook,
-  //         session,
-  //       );
-  //     }
-  //     await session.commitTransaction();
+    const parsedWorkbookData = await this.extractDataFromFile(file);
+    if (!parsedWorkbookData || !parsedWorkbookData.id) {
+      throw new ServerException(ERROR_RESPONSE.INVALID_OBJECT('json'));
+    }
+    const { fileKey: snapshotFileKey } = await this.uploadService.uploadFile(
+      body.file,
+      `workbooks/${parsedWorkbookData.id}/snapshots`,
+    );
+    try {
+      if (currentRole === RoleCode.IMA) {
+        await this.submitWorkbookVersionByIMA(
+          snapshotFileKey,
+          currentWorkbookVersion,
+          workbook,
+          session,
+        );
+      }
+      if (currentRole === RoleCode.IMS) {
+        await this.submitWorkbookVersionByIMS(
+          snapshotFileKey,
+          currentWorkbookVersion,
+          workbook,
+          session,
+        );
+      }
+      if (currentRole === RoleCode.PMA) {
+        await this.submitWorkbookVersionByPMA(
+          currentWorkbookVersion,
+          workbook,
+          session,
+          currentRole,
+        );
+      }
+      if (currentRole === RoleCode.PMS) {
+        await this.submitWorkbookVersionByPMS(
+          snapshotFileKey,
+          currentWorkbookVersion,
+          workbook,
+          session,
+        );
+      }
+      await session.commitTransaction();
 
-  //     return this.responseSuccess();
-  //   } catch (error: unknown) {
-  //     await session.abortTransaction();
-  //     this.logger.error({
-  //       message:
-  //         'WorkbookService.submitWorkbookVersion: Failed to submit workbook version',
-  //       context: 'WorkbookService.submitWorkbookVersion',
-  //       error: error,
-  //     });
-  //     if (error instanceof ServerException) {
-  //       throw error;
-  //     }
-  //     throw new ServerException({
-  //       ...ERROR_RESPONSE.BAD_REQUEST,
-  //       message: 'Failed to submit workbook sub version',
-  //     });
-  //   } finally {
-  //     await session.endSession();
-  //   }
-  // }
+      return this.responseSuccess();
+    } catch (error: unknown) {
+      await session.abortTransaction();
+      this.logger.error({
+        message:
+          'WorkbookService.submitWorkbookVersion: Failed to submit workbook version',
+        context: 'WorkbookService.submitWorkbookVersion',
+        error: error,
+      });
+      if (error instanceof ServerException) {
+        throw error;
+      }
+      throw new ServerException({
+        ...ERROR_RESPONSE.BAD_REQUEST,
+        message: 'Failed to submit workbook version',
+      });
+    } finally {
+      await session.endSession();
+    }
+  }
 
-  // async reviewWorkbookSubVersion(
-  //   userId: string,
-  //   currentReviewRole: RoleCode,
-  //   body: ReviewWorkbookSubVersionDto,
-  // ): Promise<SuccessResponseDto> {
-  //   const { workbookSubVersionId, status, rejectedReason } = body;
+  async reviewWorkbookSubVersion(
+    userId: string,
+    currentReviewRole: RoleCode,
+    body: ReviewWorkbookSubVersionDto,
+  ): Promise<SuccessResponseDto> {
+    const { workbookSubVersionId, status, comment } = body;
+    let workbookSubVersionType: WorkbookSubVersionType;
+    if (currentReviewRole === RoleCode.PMS) {
+      workbookSubVersionType = WorkbookSubVersionType.UpdateFormulas;
+    } else {
+      workbookSubVersionType = WorkbookSubVersionType.UpdateInputs;
+    }
 
-  //   const workbookSubVersion = await this.workbookSubVersionModel
-  //     .findOne({
-  //       _id: new Types.ObjectId(workbookSubVersionId),
-  //       status: WorkbookSubVersionStatus.Pending,
-  //     })
-  //     .select(['changeSet', 'workbook', 'workbookVersion'])
-  //     .populate({
-  //       path: 'workbookVersion',
-  //       select: ['version', 'role'],
-  //       populate: {
-  //         path: 'role',
-  //         select: 'code',
-  //       },
-  //     })
-  //     .exec();
-  //   if (!workbookSubVersion) {
-  //     throw new ServerException(ERROR_RESPONSE.OBJECT_NOT_FOUND('Workbook sub version'));
-  //   }
-  //   const workbookVersion = workbookSubVersion?.workbookVersion;
-  //   const isValidReviewerRole = this.isValidReviewerRole(
-  //     currentReviewRole,
-  //     workbookVersion?.role?.code,
-  //   );
-  //   if (!isValidReviewerRole) {
-  //     throw new ServerException(ERROR_RESPONSE.INVALID_REVIEWER_ROLE);
-  //   }
+    const workbookSubVersion = await this.workbookSubVersionModel
+      .findOne({
+        _id: new Types.ObjectId(workbookSubVersionId),
+        isActive: true,
+        type: workbookSubVersionType,
+        [`${currentReviewRole.toLowerCase()}Review.status`]:
+          WorkbookSubVersionStatus.Pending,
+      })
+      .select(['changeSet', 'workbook', 'team'])
+      .exec();
+    if (!workbookSubVersion) {
+      throw new ServerException(ERROR_RESPONSE.OBJECT_NOT_FOUND('Workbook sub version'));
+    }
 
-  //   const session = await this.connection.startSession();
-  //   session.startTransaction();
-  //   try {
-  //     await this.workbookSubVersionModel.updateOne(
-  //       { _id: new Types.ObjectId(workbookSubVersionId) },
-  //       {
-  //         $set: {
-  //           status,
-  //           rejectedReason,
-  //           reviewedBy: new Types.ObjectId(userId),
-  //           reviewedAt: new Date(),
-  //         },
-  //       },
-  //       { session },
-  //     );
-  //     if (status === WorkbookSubVersionStatus.Approved) {
-  //       if ([RoleCode.IMS, RoleCode.PMA].includes(currentReviewRole)) {
-  //         await this.duplicateWorkbookSubVersion(
-  //           userId,
-  //           workbookSubVersion,
-  //           currentReviewRole,
-  //           session,
-  //         );
-  //       }
-  //     }
-  //     await session.commitTransaction();
+    const session = await this.connection.startSession();
+    session.startTransaction();
+    try {
+      const reviewedAt = new Date();
+      const reviewedBy = new Types.ObjectId(userId);
+      const updateFields: Record<string, unknown> = {};
 
-  //     return this.responseSuccess();
-  //   } catch (error: unknown) {
-  //     await session.abortTransaction();
-  //     this.logger.error({
-  //       message: 'WorkbookService.reviewWorkbookSubVersion: Failed to review sub-version',
-  //       context: 'WorkbookService.reviewWorkbookSubVersion',
-  //       error: error,
-  //     });
-  //     if (error instanceof ServerException) {
-  //       throw error;
-  //     }
-  //     throw new ServerException({
-  //       ...ERROR_RESPONSE.BAD_REQUEST,
-  //       message: 'Failed to review workbook sub-version',
-  //     });
-  //   } finally {
-  //     await session.endSession();
-  //   }
-  // }
+      if (currentReviewRole === RoleCode.IMS) {
+        updateFields['imsReview'] = {
+          status,
+          comment,
+          reviewedAt,
+          reviewedBy,
+        };
+      }
+
+      if (currentReviewRole === RoleCode.PMA) {
+        updateFields['pmaReview'] = {
+          status,
+          comment,
+          reviewedAt,
+          reviewedBy,
+        };
+      }
+
+      if (currentReviewRole === RoleCode.PMS) {
+        updateFields['pmsReview'] = {
+          status,
+          comment,
+          reviewedAt,
+          reviewedBy,
+        };
+      }
+
+      await this.workbookSubVersionModel.updateOne(
+        { _id: new Types.ObjectId(workbookSubVersionId) },
+        { $set: updateFields },
+        { session },
+      );
+      await session.commitTransaction();
+
+      return this.responseSuccess();
+    } catch (error: unknown) {
+      await session.abortTransaction();
+      this.logger.error({
+        message: 'WorkbookService.reviewWorkbookSubVersion: Failed to review sub-version',
+        context: 'WorkbookService.reviewWorkbookSubVersion',
+        error: error,
+      });
+      if (error instanceof ServerException) {
+        throw error;
+      }
+      throw new ServerException({
+        ...ERROR_RESPONSE.BAD_REQUEST,
+        message: 'Failed to review workbook sub-version',
+      });
+    } finally {
+      await session.endSession();
+    }
+  }
 
   private async extractDataFromFile(
     file: Express.Multer.File,
@@ -388,6 +399,7 @@ export class WorkbookVersionService extends BaseService {
     workbook: WorkbookDocument,
     session: ClientSession,
   ) {
+    await this.validateSubmittedWorkbookVersion(workbook, RoleCode.IMA, session);
     const imsRole = await this.roleModel.findOne({ code: RoleCode.IMS });
     await this.createNewWorkbookVersion(
       snapshotFileKey,
@@ -397,7 +409,7 @@ export class WorkbookVersionService extends BaseService {
       session,
     );
 
-    return this.updateWorkbookStage(workbook._id, WorkbookStage.IMS_REVIEW, session);
+    return this.updateWorkbookStage(workbook._id, WorkbookStage.ImsReview, session);
   }
 
   private async submitWorkbookVersionByIMS(
@@ -413,9 +425,9 @@ export class WorkbookVersionService extends BaseService {
       session,
     );
     if (rejectedWorkbookSubVersions.length > 0) {
-      newStage = WorkbookStage.IMA_UPDATE_INPUTS;
+      newStage = WorkbookStage.ImaUpdateInputs;
 
-      await this.setWorkbookVersionStatusForRejectedWorkbookSubVersion(
+      await this.deactivateCurrentAndReactivatePreviousWbVersion(
         currentWorkbookVersion,
         session,
       );
@@ -429,7 +441,7 @@ export class WorkbookVersionService extends BaseService {
         session,
       );
 
-      newStage = WorkbookStage.PMA_REVIEW;
+      newStage = WorkbookStage.PmaReviewAndUpdateFormulas;
     }
 
     return this.workbookModel.updateOne(
@@ -449,7 +461,9 @@ export class WorkbookVersionService extends BaseService {
     currentWorkbookVersion: WorkbookVersionDocument,
     workbook: WorkbookDocument,
     session: ClientSession,
+    currentRole?: RoleCode,
   ) {
+    await this.validateSubmittedWorkbookVersion(workbook, RoleCode.PMA, session);
     let newStage: WorkbookStage;
     const rejectedWorkbookSubVersions = await this.getUnapprovedWorkbookSubVersionsByRole(
       workbook._id,
@@ -457,11 +471,12 @@ export class WorkbookVersionService extends BaseService {
       session,
     );
     if (rejectedWorkbookSubVersions.length > 0) {
-      newStage = WorkbookStage.IMS_REVIEW;
+      newStage = WorkbookStage.ImaUpdateInputs;
 
-      await this.setWorkbookVersionStatusForRejectedWorkbookSubVersion(
+      await this.deactivateCurrentAndReactivatePreviousWbVersion(
         currentWorkbookVersion,
         session,
+        currentRole,
       );
     } else {
       await this.workbookVersionModel.updateOne(
@@ -473,11 +488,8 @@ export class WorkbookVersionService extends BaseService {
         },
         { session },
       );
-      if (workbook.currentStage === WorkbookStage.PMA_REVIEW) {
-        newStage = WorkbookStage.PMA_UPDATE_FORMULAS;
-      }
-      if (workbook.currentStage === WorkbookStage.PMA_UPDATE_FORMULAS) {
-        newStage = WorkbookStage.PMS_REVIEW_FORMULAS;
+      if (workbook.currentStage === WorkbookStage.PmaReviewAndUpdateFormulas) {
+        newStage = WorkbookStage.PmsReviewFormulas;
       }
     }
 
@@ -497,7 +509,7 @@ export class WorkbookVersionService extends BaseService {
       session,
     );
     if (rejectedWorkbookSubVersions.length > 0) {
-      newStage = WorkbookStage.PMA_UPDATE_FORMULAS;
+      newStage = WorkbookStage.PmaReviewAndUpdateFormulas;
     } else {
       const pmsRole = await this.roleModel.findOne({ code: RoleCode.PMS });
       await this.createNewWorkbookVersion(
@@ -508,7 +520,7 @@ export class WorkbookVersionService extends BaseService {
         session,
       );
 
-      newStage = WorkbookStage.COMPLETED;
+      newStage = WorkbookStage.Completed;
     }
 
     return this.updateWorkbookStage(
@@ -522,16 +534,13 @@ export class WorkbookVersionService extends BaseService {
   private isValidStageByRole(role: RoleCode, stage: WorkbookStage): boolean {
     switch (role) {
       case RoleCode.IMA:
-        return stage === WorkbookStage.IMA_UPDATE_INPUTS;
+        return stage === WorkbookStage.ImaUpdateInputs;
       case RoleCode.IMS:
-        return stage === WorkbookStage.IMS_REVIEW;
+        return stage === WorkbookStage.ImsReview;
       case RoleCode.PMA:
-        return (
-          stage === WorkbookStage.PMA_REVIEW ||
-          stage === WorkbookStage.PMA_UPDATE_FORMULAS
-        );
+        return stage === WorkbookStage.PmaReviewAndUpdateFormulas;
       case RoleCode.PMS:
-        return stage === WorkbookStage.PMS_REVIEW_FORMULAS;
+        return stage === WorkbookStage.PmsReviewFormulas;
       default:
         return false;
     }
@@ -543,69 +552,38 @@ export class WorkbookVersionService extends BaseService {
     }
   }
 
-  private isValidReviewerRole(
-    currentReviewRole: RoleCode,
-    workbookVersionRole: RoleCode,
-  ): boolean {
-    switch (workbookVersionRole) {
-      case RoleCode.IMA:
-        return currentReviewRole === RoleCode.IMS;
-      case RoleCode.IMS:
-        return currentReviewRole === RoleCode.PMA;
-      case RoleCode.PMA:
-        return currentReviewRole === RoleCode.PMS;
-      default:
-        return false;
-    }
-  }
-
   private async getUnapprovedWorkbookSubVersionsByRole(
     workbookId: Types.ObjectId,
     roleCode: RoleCode,
     session: ClientSession,
   ): Promise<WorkbookSubVersionDocument[]> {
+    const reviewTeam = this.getReviewTeamFieldByRole(roleCode);
+
     const workbookSubVersions = <WorkbookSubVersionDocument[]>(
       await this.workbookSubVersionModel
         .aggregate([
           {
             $match: {
               workbook: workbookId,
-              status: {
+              type:
+                roleCode === RoleCode.PMA
+                  ? WorkbookSubVersionType.UpdateFormulas
+                  : WorkbookSubVersionType.UpdateInputs,
+              [`${reviewTeam}.status`]: {
                 $in: [
                   WorkbookSubVersionStatus.Pending,
                   WorkbookSubVersionStatus.Rejected,
                 ],
               },
-            },
-          },
-          {
-            $lookup: {
-              from: 'workbook-versions',
-              localField: 'workbookVersion',
-              foreignField: '_id',
-              as: 'workbookVersion',
-            },
-          },
-          { $unwind: '$workbookVersion' },
-          {
-            $lookup: {
-              from: 'roles',
-              localField: 'workbookVersion.role',
-              foreignField: '_id',
-              as: 'role',
-            },
-          },
-          { $unwind: '$role' },
-          {
-            $match: {
-              'role.code': roleCode,
+              isActive: true,
             },
           },
           {
             $project: {
               _id: 1,
-              version: 1,
-              status: 1,
+              [reviewTeam]: 1,
+              type: 1,
+              isActive: 1,
             },
           },
         ])
@@ -614,13 +592,27 @@ export class WorkbookVersionService extends BaseService {
     );
 
     const unapprovedWorkbookSubVersions = workbookSubVersions.filter(
-      (subVersion) => subVersion.status === WorkbookSubVersionStatus.Pending,
+      (subVersion) =>
+        (subVersion[reviewTeam] as TeamReviewInfo).status ===
+        WorkbookSubVersionStatus.Pending,
     );
     if (unapprovedWorkbookSubVersions.length > 0) {
       throw new ServerException(ERROR_RESPONSE.UNAPPROVED_WORKBOOK_SUB_VERSIONS);
     }
     const rejectedWorkbookSubVersions = workbookSubVersions.filter(
-      (subVersion) => subVersion.status === WorkbookSubVersionStatus.Rejected,
+      (subVersion) =>
+        (subVersion[reviewTeam] as TeamReviewInfo).status ===
+        WorkbookSubVersionStatus.Rejected,
+    );
+
+    await this.workbookSubVersionModel.updateMany(
+      {
+        _id: {
+          $in: rejectedWorkbookSubVersions.map((subVersion) => subVersion._id),
+        },
+      },
+      { $set: { isActive: false } },
+      { session },
     );
 
     return rejectedWorkbookSubVersions;
@@ -660,7 +652,7 @@ export class WorkbookVersionService extends BaseService {
     );
 
     if (role.code !== RoleCode.PMS) {
-      await this.setWorkbookVersionStatusForApprovedWorkbookSubVersion(
+      await this.deactivateCurrentAndApprovePreviousWbVersion(
         currentWorkbookVersion,
         workbook,
         session,
@@ -681,7 +673,7 @@ export class WorkbookVersionService extends BaseService {
     }
   }
 
-  private async setWorkbookVersionStatusForApprovedWorkbookSubVersion(
+  private async deactivateCurrentAndApprovePreviousWbVersion(
     currentWorkbookVersion: WorkbookVersionDocument,
     workbook: WorkbookDocument,
     session: ClientSession,
@@ -708,10 +700,12 @@ export class WorkbookVersionService extends BaseService {
     );
   }
 
-  private async setWorkbookVersionStatusForRejectedWorkbookSubVersion(
+  private async deactivateCurrentAndReactivatePreviousWbVersion(
     currentWorkbookVersion: WorkbookVersionDocument,
     session: ClientSession,
+    currentRole?: RoleCode,
   ): Promise<void> {
+    let numberOfPreviousVersion = 1;
     // If current submitted workbook version -> set current to inactive and set previous to active
     await this.workbookVersionModel.updateOne(
       {
@@ -724,9 +718,13 @@ export class WorkbookVersionService extends BaseService {
       },
       { session },
     );
+    if (currentRole === RoleCode.PMA) {
+      // PMA -> IMA workbook version
+      numberOfPreviousVersion = 2;
+    }
     await this.workbookVersionModel.updateOne(
       {
-        version: currentWorkbookVersion.version - 1,
+        version: currentWorkbookVersion.version - numberOfPreviousVersion,
       },
       {
         $set: {
@@ -830,60 +828,17 @@ export class WorkbookVersionService extends BaseService {
   }
 
   private async validateSubmittedWorkbookVersion(
-    workbookVersion: WorkbookVersionDocument,
     workbook: WorkbookDocument,
-    roleCode: RoleCode,
+    submittedRole: RoleCode,
     session: ClientSession,
   ): Promise<void> {
-    if (roleCode === RoleCode.PMS || workbook.currentStage === WorkbookStage.PMA_REVIEW)
-      return;
-
     const workbookSubVersionCount = await this.workbookSubVersionModel
       .countDocuments({
-        workbookVersion: workbookVersion._id,
+        workbook: workbook._id,
+        team: this.mappingWorkbookSubVersionTeamByRole(submittedRole),
       })
       .session(session)
       .exec();
-    if (
-      roleCode === RoleCode.IMS &&
-      workbook.currentStage === WorkbookStage.IMS_REVIEW &&
-      workbookSubVersionCount === 0
-    ) {
-      const imaWorkbookSubVersions = <WorkbookSubVersionDocument[]>(
-        await this.workbookSubVersionModel
-          .aggregate([
-            {
-              $match: {
-                workbook: workbook._id,
-              },
-            },
-            {
-              $lookup: {
-                from: 'workbook-versions',
-                localField: 'workbookVersion',
-                foreignField: '_id',
-                as: 'workbookVersion',
-              },
-            },
-            { $unwind: '$workbookVersion' },
-            {
-              $match: {
-                'workbookVersion.version': workbookVersion.version - 1,
-              },
-            },
-          ])
-          .session(session)
-          .exec()
-      );
-      // by pass validate required workbook sub versions if all rejected
-      const rejectedWorkbookSubVersions = imaWorkbookSubVersions.filter(
-        (subVersion) => subVersion.status === WorkbookSubVersionStatus.Rejected,
-      );
-      const allRejectedWorkbookSubVersion =
-        rejectedWorkbookSubVersions.length === imaWorkbookSubVersions.length;
-
-      if (allRejectedWorkbookSubVersion) return;
-    }
 
     if (workbookSubVersionCount === 0) {
       throw new ServerException(ERROR_RESPONSE.REQUIRE_WORKBOOK_SUB_VERSIONS);
@@ -940,5 +895,35 @@ export class WorkbookVersionService extends BaseService {
       },
       { session },
     );
+  }
+
+  private mappingWorkbookSubVersionTeamByRole(role: RoleCode): WorkbookSubVersionTeam {
+    switch (role) {
+      case RoleCode.IMA:
+        return WorkbookSubVersionTeam.IMA;
+      case RoleCode.IMS:
+        return WorkbookSubVersionTeam.IMS;
+      case RoleCode.PMA:
+        return WorkbookSubVersionTeam.PMA;
+      case RoleCode.PMS:
+        return WorkbookSubVersionTeam.PMS;
+      default:
+        return WorkbookSubVersionTeam.IMA;
+    }
+  }
+
+  private getReviewTeamFieldByRole(
+    roleCode: RoleCode,
+  ): 'imsReview' | 'pmaReview' | 'pmsReview' {
+    switch (roleCode) {
+      case RoleCode.IMA:
+        return 'imsReview';
+      case RoleCode.IMS:
+        return 'pmaReview';
+      case RoleCode.PMA:
+        return 'pmsReview';
+      default:
+        return 'imsReview';
+    }
   }
 }
