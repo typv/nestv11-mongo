@@ -26,8 +26,9 @@ import { ERROR_RESPONSE } from '../../common/constants';
 import { AccountAction, JwtTokenType, RoleCode, UserType } from '../../common/enums';
 import { HashUtil } from '../../common/utilities';
 import { getTtlValue } from '../../common/utilities/time.util';
-import { Role, RoleDocument, User, UserDocument } from '../../models';
+import { Role, User, UserDocument } from '../../models';
 import { ServerException } from '../../exceptions';
+import { RoleRepository, UserRepository } from 'src/repositories';
 
 @Injectable()
 export class AuthService {
@@ -42,14 +43,14 @@ export class AuthService {
     private readonly jwtConfig: ConfigType<typeof jwtConfiguration>,
     @Inject(codeExpiresConfiguration.KEY)
     private readonly codeExpiresConfig: ConfigType<typeof codeExpiresConfiguration>,
-    @InjectModel(User.name) private userModel: Model<UserDocument>,
-    @InjectModel(Role.name) private roleModel: Model<RoleDocument>,
+    private readonly userRepository: UserRepository,
+    private readonly roleRepository: RoleRepository,
     @InjectConnection() private connection: Connection,
   ) {}
 
   async login(body: LoginBodyDto) {
     const { email, password } = body;
-    const user = await this.userModel.findOne({ email });
+    const user = await this.userRepository.findOne({ email });
 
     if (!user?.password) throw new ServerException(ERROR_RESPONSE.INVALID_CREDENTIALS);
     if (!user.isActive) throw new ServerException(ERROR_RESPONSE.USER_DEACTIVATED);
@@ -64,10 +65,10 @@ export class AuthService {
 
   async signUp(body: SignUpBodyDto) {
     const { email, password, roleId } = body;
-    const user = await this.userModel.findOne({ email });
+    const user = await this.userRepository.findOne({ email });
     if (user) throw new ServerException(ERROR_RESPONSE.USER_ALREADY_EXISTS);
 
-    const role = await this.roleModel.findOne({ _id: new Types.ObjectId(roleId) });
+    const role = await this.roleRepository.findOne({ _id: new Types.ObjectId(roleId) });
     if (!role) throw new ServerException(ERROR_RESPONSE.OBJECT_NOT_FOUND('Role'));
     if (role.code === RoleCode.Admin) throw new ServerException(ERROR_RESPONSE.INVALID_OBJECT('Role'));
 
@@ -82,7 +83,7 @@ export class AuthService {
       userType: UserType.User,
       role: role._id,
     };
-    const newUser = await this.userModel.create(userData);
+    const newUser = await this.userRepository.create(userData);
 
     return this.manageUserToken(newUser);
   }
@@ -107,7 +108,7 @@ export class AuthService {
   }
 
   async resendVerificationEmail(_id: string) {
-    const user = await this.userModel.findOne({ _id });
+    const user = await this.userRepository.findById(_id);
     if (!user) throw new ServerException(ERROR_RESPONSE.USER_NOT_FOUND);
     if (user.emailVerified)
       throw new ServerException(ERROR_RESPONSE.EMAIL_ALREADY_VERIFIED);
@@ -142,7 +143,7 @@ export class AuthService {
   async verifyEmail(body: VerifyEmailBodyDto): Promise<VerifyEmailResponseDto> {
     const { email, token } = body;
 
-    const user = await this.userModel.findOne({ email });
+    const user = await this.userRepository.findOne({ email });
     if (!user) throw new ServerException(ERROR_RESPONSE.USER_NOT_FOUND);
 
     const verifyEmailKey = this.redisService.getVerifyEmailKey(user._id.toString());
@@ -163,7 +164,7 @@ export class AuthService {
     body: SendResetPasswordLinkBodyDto,
   ): Promise<SendResetPasswordResponseDto> {
     const { email } = body;
-    const user = await this.userModel.findOne({ email });
+    const user = await this.userRepository.findOne({ email });
     if (!user) throw new ServerException(ERROR_RESPONSE.USER_NOT_FOUND);
 
     const token = uuidv4();
@@ -197,7 +198,7 @@ export class AuthService {
     body: VerifyResetPasswordLinkBodyDto,
   ): Promise<VerifyResetPasswordLinkResponseDto> {
     const { email, token } = body;
-    const user = await this.userModel.findOne({ email });
+    const user = await this.userRepository.findOne({ email });
     if (!user) {
       throw new ServerException(ERROR_RESPONSE.USER_NOT_FOUND);
     }
@@ -209,7 +210,7 @@ export class AuthService {
   async resetPassword(body: ResetPasswordBodyDto): Promise<ResetPasswordResponseDto> {
     const { newPassword, email, token } = body;
 
-    const user = await this.userModel.findOne({ email });
+    const user = await this.userRepository.findOne({ email });
     if (!user) {
       throw new ServerException(ERROR_RESPONSE.USER_NOT_FOUND);
     }
@@ -226,7 +227,7 @@ export class AuthService {
     }
 
     const hashedPassword = await HashUtil.hashData(newPassword);
-    await this.userModel.updateOne(
+    await this.userRepository.updateOne(
       { _id: user._id },
       {
         password: hashedPassword,
@@ -254,7 +255,7 @@ export class AuthService {
 
   private async manageUserToken(user: User) {
     const jti = uuidv4();
-    const role = await this.roleModel.findOne({ _id: user.role });
+    const role = await this.roleRepository.findOne({ _id: user.role });
     const tokenPayload = {
       id: user._id.toString(),
       jti,
