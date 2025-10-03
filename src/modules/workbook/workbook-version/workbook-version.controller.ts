@@ -56,10 +56,11 @@ export class WorkbookVersionController {
     },
   })
   submitWorkbookVersion(
+    @User('id') userId: string,
     @User('role') role: RoleCode,
     @Body() body: SubmitVersionDto,
   ): Promise<SuccessResponseDto> {
-    return this.workbookVersionService.submitWorkbookVersion(role, body);
+    return this.workbookVersionService.submitWorkbookVersion(userId, role, body);
   }
 
   @RoleBaseAccessControl(RoleCode.IMS, RoleCode.PMA, RoleCode.PMS)

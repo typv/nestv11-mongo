@@ -141,6 +141,7 @@ export class WorkbookVersionService extends BaseService {
   }
 
   async submitWorkbookVersion(
+    userId: string,
     currentRole: RoleCode,
     body: SubmitVersionDto,
   ): Promise<SuccessResponseDto> {
@@ -223,6 +224,7 @@ export class WorkbookVersionService extends BaseService {
     try {
       if (currentRole === RoleCode.IMA) {
         await this.submitWorkbookVersionByIMA(
+          userId,
           snapshotFileKey,
           currentWorkbookVersion,
           workbook,
@@ -231,6 +233,7 @@ export class WorkbookVersionService extends BaseService {
       }
       if (currentRole === RoleCode.IMS) {
         await this.submitWorkbookVersionByIMS(
+          userId,
           snapshotFileKey,
           currentWorkbookVersion,
           workbook,
@@ -247,6 +250,7 @@ export class WorkbookVersionService extends BaseService {
       }
       if (currentRole === RoleCode.PMS) {
         await this.submitWorkbookVersionByPMS(
+          userId,
           snapshotFileKey,
           currentWorkbookVersion,
           workbook,
@@ -394,6 +398,7 @@ export class WorkbookVersionService extends BaseService {
   }
 
   private async submitWorkbookVersionByIMA(
+    userId: string,
     snapshotFileKey: string,
     currentWorkbookVersion: WorkbookVersionDocument,
     workbook: WorkbookDocument,
@@ -402,6 +407,7 @@ export class WorkbookVersionService extends BaseService {
     await this.validateSubmittedWorkbookVersion(workbook, RoleCode.IMA, session);
     const imsRole = await this.roleModel.findOne({ code: RoleCode.IMS });
     await this.createNewWorkbookVersion(
+      userId,
       snapshotFileKey,
       workbook,
       currentWorkbookVersion,
@@ -413,6 +419,7 @@ export class WorkbookVersionService extends BaseService {
   }
 
   private async submitWorkbookVersionByIMS(
+    userId: string,
     snapshotFileKey: string,
     currentWorkbookVersion: WorkbookVersionDocument,
     workbook: WorkbookDocument,
@@ -434,6 +441,7 @@ export class WorkbookVersionService extends BaseService {
     } else {
       const pmaRole = await this.roleModel.findOne({ code: RoleCode.PMA });
       await this.createNewWorkbookVersion(
+        userId,
         snapshotFileKey,
         workbook,
         currentWorkbookVersion,
@@ -497,6 +505,7 @@ export class WorkbookVersionService extends BaseService {
   }
 
   private async submitWorkbookVersionByPMS(
+    userId: string,
     snapshotFileKey: string,
     currentWorkbookVersion: WorkbookVersionDocument,
     workbook: WorkbookDocument,
@@ -513,6 +522,7 @@ export class WorkbookVersionService extends BaseService {
     } else {
       const pmsRole = await this.roleModel.findOne({ code: RoleCode.PMS });
       await this.createNewWorkbookVersion(
+        userId,
         snapshotFileKey,
         workbook,
         currentWorkbookVersion,
@@ -619,6 +629,7 @@ export class WorkbookVersionService extends BaseService {
   }
 
   private async createNewWorkbookVersion(
+    userId: string,
     snapshotFileKey: string,
     workbook: WorkbookDocument,
     currentWorkbookVersion: WorkbookVersionDocument,
@@ -639,6 +650,8 @@ export class WorkbookVersionService extends BaseService {
               : WorkbookVersionStatus.Approved,
           role: role._id,
           snapshotFileKey: snapshotFileKey,
+          submittedBy: new Types.ObjectId(userId),
+          submittedAt: new Date(),
         },
         $set: {
           isCurrentActive: true,

@@ -101,8 +101,10 @@ export class WorkbookService extends BaseService {
           role: roleDoc._id,
           status: WorkbookVersionStatus.Awaiting,
           snapshotFileKey: uploadResponse.fileKey,
+          submittedBy: new Types.ObjectId(userId),
+          submittedAt: new Date(),
         } as unknown as Partial<WorkbookVersion>,
-        session
+        session,
       );
       await session.commitTransaction();
 
