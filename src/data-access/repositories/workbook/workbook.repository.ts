@@ -1,5 +1,5 @@
-import { BaseRepository } from 'src/repositories/base.repository';
-import { Workbook, WorkbookDocument } from 'src/models';
+import { BaseRepository } from 'src/data-access/repositories/base.repository';
+import { Workbook, WorkbookDocument } from 'src/data-access/models';
 import { InjectModel } from '@nestjs/mongoose';
 import { ClientSession, Model, Types } from 'mongoose';
 

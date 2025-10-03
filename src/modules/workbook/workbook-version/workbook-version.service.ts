@@ -32,7 +32,7 @@ import {
   WorkbookSubVersionDocument,
   WorkbookVersion,
   WorkbookVersionDocument,
-} from '../../../models';
+} from 'src/data-access/models';
 import { BaseService } from '../../base.service';
 import { UploadService } from '../../upload';
 import {

@@ -2,9 +2,9 @@ import chalk from 'chalk';
 import { Command, CommandRunner, Option } from 'nest-commander';
 import { commandConstants } from '../command.constant';
 import { InjectModel } from '@nestjs/mongoose';
-import { User, UserDocument } from 'src/models';
+import { User, UserDocument } from 'src/data-access/models';
 import { Model } from 'mongoose';
-import { Role, RoleDocument } from 'src/models/role.model';
+import { Role, RoleDocument } from 'src/data-access/models/role.model';
 import { masterDateRoles } from 'src/master-data';
 
 @Command({

@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { WorkbookVersion, WorkbookVersionSchema } from 'src/models';
-import { WorkbookVersionRepository } from 'src/repositories/workbook-version/workbook-version.repository';
+import { WorkbookVersion, WorkbookVersionSchema } from 'src/data-access/models';
+import { WorkbookVersionRepository } from 'src/data-access/repositories/workbook-version/workbook-version.repository';
 
 @Module({
   imports: [

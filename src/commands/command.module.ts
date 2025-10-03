@@ -4,7 +4,7 @@ import { CreateAdminQuestions } from './questions/create-admin.questions';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigType } from '@nestjs/config';
 import { mongodbConfiguration, validationSchema } from 'src/config';
-import { Permission, PermissionSchema, Role, RoleSchema, User, UserSchema } from 'src/models';
+import { Permission, PermissionSchema, Role, RoleSchema, User, UserSchema } from 'src/data-access/models';
 import { RoleSeederCommand } from 'src/commands/seeders/role-seeder.command';
 import { AllSeederCommand } from 'src/commands/seeders/all-seeder.command';
 import { PermissionSeederCommand } from 'src/commands/seeders/permission-seeder.command';

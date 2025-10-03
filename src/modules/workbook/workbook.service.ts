@@ -15,10 +15,10 @@ import { BaseService } from '../base.service';
 import { WorkbookVersionStatus } from 'src/modules/workbook/workbook.enum';
 import { UploadService } from 'src/modules/upload';
 import { FileUtil } from 'src/common/utilities/file.util';
-import { WorkbookRepository } from 'src/repositories/workbook/workbook.repository';
-import { WorkbookVersionRepository } from 'src/repositories/workbook-version/workbook-version.repository';
-import { RoleRepository } from 'src/repositories/role/role.repository';
-import { WorkbookVersion } from 'src/models';
+import { WorkbookRepository } from 'src/data-access/repositories/workbook/workbook.repository';
+import { WorkbookVersionRepository } from 'src/data-access/repositories/workbook-version/workbook-version.repository';
+import { RoleRepository } from 'src/data-access/repositories/role/role.repository';
+import { WorkbookVersion } from 'src/data-access/models';
 
 @Injectable()
 export class WorkbookService extends BaseService {

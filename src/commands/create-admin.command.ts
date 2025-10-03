@@ -3,9 +3,9 @@ import { Command, CommandRunner, InquirerService, Option } from 'nest-commander'
 import { commandConstants, questionConstants } from './command.constant';
 import { HashUtil } from '../common/utilities/hash.util';
 import { InjectModel } from '@nestjs/mongoose';
-import { User, UserDocument } from 'src/models';
+import { User, UserDocument } from 'src/data-access/models';
 import { Model } from 'mongoose';
-import { Role, RoleDocument } from 'src/models/role.model';
+import { Role, RoleDocument } from 'src/data-access/models/role.model';
 import { RoleCode, UserType } from 'src/common/enums';
 
 @Command({

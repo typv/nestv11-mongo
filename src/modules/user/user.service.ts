@@ -14,8 +14,8 @@ import { ERROR_RESPONSE } from '../../common/constants';
 import { SuccessResponseDto } from '../../common/dto/success-response.dto';
 import { ServerException } from '../../exceptions';
 import { UploadService } from '../upload';
-import { UserRepository } from 'src/repositories';
-import { UserDocument } from 'src/models';
+import { UserRepository } from 'src/data-access/repositories';
+import { UserDocument } from 'src/data-access/models';
 
 @Injectable()
 export class UserService extends BaseService {

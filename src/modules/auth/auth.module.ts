@@ -10,7 +10,7 @@ import { AuthStrategy, RefreshTokenStrategy } from 'src/modules/auth/strategies'
 import { GoogleAuthModule } from 'src/modules/base/google-auth';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { RoleDAModule, UserDAModule } from 'src/repositories';
+import { RoleDAModule, UserDAModule } from 'src/data-access/repositories';
 
 @Module({
   imports: [

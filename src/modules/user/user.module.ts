@@ -4,7 +4,7 @@ import { codeExpiresConfiguration } from 'src/config';
 import { UploadModule } from 'src/modules/upload';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
-import { UserDAModule } from 'src/repositories';
+import { UserDAModule } from 'src/data-access/repositories';
 
 @Module({
   imports: [

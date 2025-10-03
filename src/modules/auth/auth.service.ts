@@ -26,9 +26,9 @@ import { ERROR_RESPONSE } from '../../common/constants';
 import { AccountAction, JwtTokenType, RoleCode, UserType } from '../../common/enums';
 import { HashUtil } from '../../common/utilities';
 import { getTtlValue } from '../../common/utilities/time.util';
-import { Role, User, UserDocument } from '../../models';
+import { Role, User, UserDocument } from 'src/data-access/models';
 import { ServerException } from '../../exceptions';
-import { RoleRepository, UserRepository } from 'src/repositories';
+import { RoleRepository, UserRepository } from 'src/data-access/repositories';
 
 @Injectable()
 export class AuthService {

@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { PermissionCode, RoleCode } from 'src/common/enums';
-import { BaseDocument, BaseModel } from 'src/models/base.model';
+import { BaseDocument, BaseModel } from 'src/data-access/models/base.model';
 
 export type RoleDocument = BaseDocument<Role>;
 

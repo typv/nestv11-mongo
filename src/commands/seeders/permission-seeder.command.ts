@@ -3,7 +3,7 @@ import { Command, CommandRunner, Option } from 'nest-commander';
 import { commandConstants } from '../command.constant';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Permission, PermissionDocument } from 'src/models';
+import { Permission, PermissionDocument } from 'src/data-access/models';
 import { masterDatePermissions } from 'src/master-data/permissions';
 
 @Command({

@@ -7,7 +7,7 @@ import {
 import { Role } from './role.model';
 import { User } from './user.model';
 import { Workbook } from './workbook.model';
-import { BaseDocument, BaseModel } from 'src/models/base.model';
+import { BaseDocument, BaseModel } from 'src/data-access/models/base.model';
 
 @Schema({ _id: false })
 export class Collaborator {
