@@ -12,7 +12,7 @@ import {
   WorkbookSubVersionSchema,
   WorkbookVersion,
   WorkbookVersionSchema,
-} from '../../../models';
+} from 'src/data-access/models';
 import { UploadModule } from '../../upload';
 
 @Module({

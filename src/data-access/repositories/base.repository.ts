@@ -10,7 +10,7 @@ import mongoose, {
   DeleteResult,
   CreateOptions,
 } from 'mongoose';
-import { BaseDocument } from 'src/models/base.model';
+import { BaseDocument } from 'src/data-access/models/base.model';
 import { APP_DEFAULTS } from 'src/common/constants';
 import { PaginationResponseDto } from 'src/common/dto';
 

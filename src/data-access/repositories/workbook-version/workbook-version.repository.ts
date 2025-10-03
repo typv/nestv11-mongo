@@ -1,5 +1,5 @@
-import { BaseRepository } from 'src/repositories/base.repository';
-import { WorkbookVersion, WorkbookVersionDocument } from 'src/models';
+import { BaseRepository } from 'src/data-access/repositories/base.repository';
+import { WorkbookVersion, WorkbookVersionDocument } from 'src/data-access/models';
 import { InjectModel } from '@nestjs/mongoose';
 import { Aggregate, ClientSession, Model, Types } from 'mongoose';
 import { FindWorkbookListDto } from 'src/modules/workbook/dto';

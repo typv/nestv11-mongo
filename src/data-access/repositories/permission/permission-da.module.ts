@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { Permission, PermissionSchema } from 'src/models';
-import { PermissionRepository } from 'src/repositories/permission/permission.repository';
+import { Permission, PermissionSchema } from 'src/data-access/models';
+import { PermissionRepository } from 'src/data-access/repositories/permission/permission.repository';
 
 @Module({
   imports: [

@@ -5,7 +5,7 @@ import { Logger } from 'winston';
 import { RoleListResponseDto } from 'src/modules/role/dto/response/role-list-response.dto';
 import { plainToInstance } from 'class-transformer';
 import { RoleCode } from 'src/common/enums';
-import { RoleRepository } from 'src/repositories';
+import { RoleRepository } from 'src/data-access/repositories';
 
 @Injectable()
 export class RoleService extends BaseService {

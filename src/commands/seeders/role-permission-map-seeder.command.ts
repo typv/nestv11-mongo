@@ -2,7 +2,7 @@ import chalk from 'chalk';
 import { Command, CommandRunner, Option } from 'nest-commander';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Permission, PermissionDocument, Role, RoleDocument } from 'src/models';
+import { Permission, PermissionDocument, Role, RoleDocument } from 'src/data-access/models';
 import { rolePermissionsMapping } from 'src/master-data/role-permission-map';
 import { commandConstants } from '../command.constant';
 import { RoleCode } from 'src/common/enums';

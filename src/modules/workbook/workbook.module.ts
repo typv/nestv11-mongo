@@ -5,7 +5,7 @@ import { WorkbookService } from './workbook.service';
 import { WorkbookVersionModule } from 'src/modules/workbook/workbook-version/workbook-version.module';
 import { AwsS3Module } from 'src/modules/base/aws-s3';
 import { UploadModule } from 'src/modules/upload';
-import { RoleDAModule, WorkbookDAModule, WorkbookVersionDAModule } from 'src/repositories';
+import { RoleDAModule, WorkbookDAModule, WorkbookVersionDAModule } from 'src/data-access/repositories';
 
 @Module({
   imports: [

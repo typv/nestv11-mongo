@@ -8,9 +8,9 @@ import { ServerException } from 'src/exceptions';
 import { JwtPayload, UserRequestPayload } from 'src/modules/auth/auth.interface';
 import { RedisService } from 'src/modules/base/redis';
 import { jwtConfiguration } from '../../../config';
-import { User } from 'src/models';
+import { User } from 'src/data-access/models';
 import mongoose from 'mongoose';
-import { UserRepository } from 'src/repositories';
+import { UserRepository } from 'src/data-access/repositories';
 
 @Injectable()
 export class RefreshTokenStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {

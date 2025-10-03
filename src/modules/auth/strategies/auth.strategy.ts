@@ -8,8 +8,8 @@ import { ServerException } from 'src/exceptions';
 import { JwtPayload, UserRequestPayload } from 'src/modules/auth/auth.interface';
 import { RedisService } from 'src/modules/base/redis';
 import { jwtConfiguration } from '../../../config';
-import { RoleDocument, UserDocument } from 'src/models';
-import { UserRepository } from 'src/repositories';
+import { RoleDocument, UserDocument } from 'src/data-access/models';
+import { UserRepository } from 'src/data-access/repositories';
 
 @Injectable()
 export class AuthStrategy extends PassportStrategy(Strategy) {
