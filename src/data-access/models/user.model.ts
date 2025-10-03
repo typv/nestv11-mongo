@@ -1,14 +1,13 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, Types } from 'mongoose';
-import { UserType } from '../common/enums';
-import { Role } from 'src/models/role.model';
+import { Types } from 'mongoose';
+import { UserType } from '../../common/enums';
+import { Role } from 'src/data-access/models/role.model';
+import { BaseDocument, BaseModel } from 'src/data-access/models/base.model';
 
-export type UserDocument = HydratedDocument<User>;
+export type UserDocument = BaseDocument<User>;
 
 @Schema({ timestamps: true, collection: 'users' })
-export class User {
-  @Prop({ type: Types.ObjectId, default: () => new Types.ObjectId() })
-  _id?: Types.ObjectId;
+export class User extends BaseModel {
 
   @Prop({ required: true, unique: true })
   email: string;
@@ -18,6 +17,9 @@ export class User {
 
   @Prop()
   lastName?: string;
+
+  @Prop()
+  fullName?: string;
 
   @Prop({ required: true })
   password: string;

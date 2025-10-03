@@ -1,18 +1,18 @@
 import chalk from 'chalk';
 import { Command, CommandRunner, Option } from 'nest-commander';
-import { commandConstants } from './command.constant';
+import { commandConstants } from '../command.constant';
 import { InjectModel } from '@nestjs/mongoose';
-import { User, UserDocument } from 'src/models';
+import { User, UserDocument } from 'src/data-access/models';
 import { Model } from 'mongoose';
-import { Role, RoleDocument } from 'src/models/role.model';
+import { Role, RoleDocument } from 'src/data-access/models/role.model';
 import { masterDateRoles } from 'src/master-data';
 
 @Command({
-  name: commandConstants.createRoles,
-  description: 'Create all system roles',
+  name: commandConstants.seedRoles,
+  description: 'Create all roles',
   arguments: '[]',
 })
-export class CreateRolesCommand extends CommandRunner {
+export class RoleSeederCommand extends CommandRunner {
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     @InjectModel(Role.name) private roleModel: Model<RoleDocument>,
@@ -36,7 +36,7 @@ export class CreateRolesCommand extends CommandRunner {
 
       console.log(chalk.green('Create roles successfully.'));
     } catch (err) {
-      console.log(chalk.red('CreateRolesCommand Error: '), err);
+      console.log(chalk.red('RoleSeederCommand Error: '), err);
     }
   }
 

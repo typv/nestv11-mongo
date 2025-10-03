@@ -3,7 +3,7 @@ import { plainToInstance } from 'class-transformer';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { ERROR_RESPONSE } from 'src/common/constants';
 import { ServerException } from 'src/exceptions';
-import { AwsS3Service } from 'src/modules/base/aws-s3';
+import { AwsS3Service, uploadResponse } from 'src/modules/base/aws-s3';
 import { Logger } from 'winston';
 import { UploadPresignBodyDto, UploadPresignResponseDto } from './dto';
 
@@ -41,22 +41,17 @@ export class UploadService {
     }
   }
 
-  async uploadFile(file: Express.Multer.File, uploadPath?: string) {
+  async uploadFile(file: Express.Multer.File, uploadPath?: string): Promise<uploadResponse> {
     try {
-      const { fileUrl } = await this.awsS3Service.uploadFile(
-        file.originalname,
-        file.mimetype,
-        file.buffer,
+      const result: uploadResponse = await this.awsS3Service.upload(
+        file,
         uploadPath,
+        file.mimetype
       );
 
-      return fileUrl;
+      return result;
     } catch (error) {
-      this.logger.error({
-        message: 'UploadService.uploadFile: Failed to upload file',
-        context: 'UploadService.uploadFile',
-        error: error,
-      });
+      this.logger.error('uploadFile', error);
 
       throw new ServerException({
         ...ERROR_RESPONSE.BAD_REQUEST,

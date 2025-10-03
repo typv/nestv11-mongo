@@ -1,17 +1,16 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { MongooseModule } from '@nestjs/mongoose';
 import { codeExpiresConfiguration } from 'src/config';
 import { UploadModule } from 'src/modules/upload';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
-import { User, UserSchema } from '../../models';
+import { UserDAModule } from 'src/data-access/repositories';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ load: [codeExpiresConfiguration] }),
-    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
     UploadModule,
+    UserDAModule
   ],
   controllers: [UserController],
   providers: [UserService],

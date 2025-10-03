@@ -5,12 +5,29 @@ import {
   IsLettersAndSpaces,
   IsNotFutureDate,
   IsValidPhoneNumber,
+  ObjectIdToIdString,
   PropertyDto,
 } from 'src/decorators';
 import { DeleteConstraintReasonType } from '../user.enum';
 
 // ****************************** GetMyInformation ******************************
+export class RoleResponseDto {
+  @PropertyDto()
+  @ObjectIdToIdString()
+  id: string;
+
+  @PropertyDto()
+  code: string;
+
+  @PropertyDto()
+  name: string;
+
+  @PropertyDto()
+  permissions: string[];
+}
+
 export class GetMyInformationResponseDto {
+  @ObjectIdToIdString()
   @PropertyDto()
   id: string;
 
@@ -29,14 +46,34 @@ export class GetMyInformationResponseDto {
   @PropertyDto()
   emailVerified: boolean;
 
-  @PropertyDto()
-  role: RoleCode;
+  @PropertyDto({
+    type: RoleResponseDto,
+    structure: 'dto',
+  })
+  role: RoleResponseDto;
 }
 
 // ****************************** GetUserInformation ******************************
-export class GetUserInformationResponseDto extends OmitType(GetMyInformationResponseDto, [
-  'emailVerified',
-]) {}
+export class GetUserInformationResponseDto {
+  @PropertyDto()
+  @ObjectIdToIdString()
+  id: string;
+
+  @PropertyDto()
+  email: string;
+
+  @PropertyDto()
+  userType: string;
+
+  @PropertyDto()
+  isActive: boolean;
+
+  @PropertyDto()
+  role: string;
+
+  @PropertyDto()
+  createdAt: string;
+}
 
 export class SetUserTypeBodyDto {
   @PropertyDto({

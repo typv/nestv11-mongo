@@ -1,14 +1,11 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, Types } from 'mongoose';
-import { RoleCode } from 'src/common/enums';
-import { User } from 'src/models/user.model';
+import { PermissionCode, RoleCode } from 'src/common/enums';
+import { BaseDocument, BaseModel } from 'src/data-access/models/base.model';
 
-export type RoleDocument = HydratedDocument<Role>;
+export type RoleDocument = BaseDocument<Role>;
 
 @Schema({ timestamps: true, collection: 'roles' })
-export class Role {
-  @Prop({ type: Types.ObjectId, default: () => new Types.ObjectId() })
-  _id?: Types.ObjectId;
+export class Role extends BaseModel {
 
   @Prop({ enum: RoleCode, required: true })
   code: RoleCode;
@@ -21,6 +18,9 @@ export class Role {
 
   @Prop({ type: Boolean, default: true })
   isActive: boolean;
+
+  @Prop({ type: [String], default: [] })
+  permissions: PermissionCode[] | string[];
 }
 
 export const RoleSchema = SchemaFactory.createForClass(Role);

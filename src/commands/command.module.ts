@@ -4,9 +4,11 @@ import { CreateAdminQuestions } from './questions/create-admin.questions';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigType } from '@nestjs/config';
 import { mongodbConfiguration, validationSchema } from 'src/config';
-import { User, UserSchema } from 'src/models';
-import { Role, RoleSchema } from 'src/models/role.model';
-import { CreateRolesCommand } from 'src/commands/create-roles.command';
+import { Permission, PermissionSchema, Role, RoleSchema, User, UserSchema } from 'src/data-access/models';
+import { RoleSeederCommand } from 'src/commands/seeders/role-seeder.command';
+import { AllSeederCommand } from 'src/commands/seeders/all-seeder.command';
+import { PermissionSeederCommand } from 'src/commands/seeders/permission-seeder.command';
+import { RolePermissionMapSeederCommand } from 'src/commands/seeders/role-permission-map-seeder.command';
 
 @Module({
   imports: [
@@ -28,12 +30,16 @@ import { CreateRolesCommand } from 'src/commands/create-roles.command';
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
       { name: Role.name, schema: RoleSchema },
+      { name: Permission.name, schema: PermissionSchema },
     ]),
   ],
   providers: [
     CreateAdminCommand,
     CreateAdminQuestions,
-    CreateRolesCommand
+    AllSeederCommand,
+    RoleSeederCommand,
+    PermissionSeederCommand,
+    RolePermissionMapSeederCommand,
   ],
   exports: [],
 })

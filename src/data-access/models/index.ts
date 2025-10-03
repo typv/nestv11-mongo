@@ -1,6 +1,5 @@
 export * from './user.model';
 export * from './workbook.model';
-export * from './worksheet.model';
 export {
   Collaborator,
   WorkbookVersion,
@@ -8,3 +7,5 @@ export {
   WorkbookVersionSchema,
 } from './workbook-version.model';
 export * from './role.model';
+export * from './permission.model';
+export * from './workbook-sub-version.model';

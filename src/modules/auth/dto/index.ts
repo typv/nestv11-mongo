@@ -7,6 +7,7 @@ import {
   IsValidPhoneNumber,
   PropertyDto,
 } from 'src/decorators';
+import { PickType } from '@nestjs/swagger';
 
 // ****************************** InternalSignUp ******************************
 export class SignUpBodyDto {
@@ -33,6 +34,14 @@ export class SignUpBodyDto {
     minSymbols: 1,
   })
   password: string;
+
+  @PropertyDto({
+    type: String,
+    required: true,
+    validated: true,
+    example: '68da09202e038d27742f08d5',
+  })
+  roleId: string;
 }
 
 export class SignUpResponseDto {
@@ -44,7 +53,7 @@ export class SignUpResponseDto {
 }
 
 // ****************************** Login ******************************
-export class LoginBodyDto extends SignUpBodyDto {}
+export class LoginBodyDto extends PickType(SignUpBodyDto, ['email', 'password'] as const) {}
 
 export class LoginResponseDto extends SignUpResponseDto {}
 
