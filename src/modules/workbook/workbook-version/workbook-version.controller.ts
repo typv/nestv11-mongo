@@ -4,6 +4,9 @@ import { FormDataRequest } from 'nestjs-form-data';
 import { WorkbookVersionSnapshotResponseDto } from 'src/modules/workbook/workbook-version/dto/response/workbook-version-snapshot-response.dto';
 import {
   CreateWorkbookSubVersionDto,
+  CreateWorkbookSubVersionResponseDto,
+  ReviewWorkbookSubVersionDto,
+  SubmitVersionDto,
   SubVersionResponseDto,
   VersionResponseDto,
 } from './dto';
@@ -36,48 +39,48 @@ export class WorkbookVersionController {
     @User('id') userId: string,
     @User('role') role: RoleCode,
     @Body() body: CreateWorkbookSubVersionDto,
-  ): Promise<SuccessResponseDto> {
+  ): Promise<CreateWorkbookSubVersionResponseDto> {
     return this.workbookVersionService.createWorkbookSubVersion(userId, role, body);
   }
 
-  // @Post('submit')
-  // @FormDataRequest()
-  // @SwaggerApiDocument({
-  //   response: {
-  //     status: HttpStatus.OK,
-  //   },
-  //   body: { type: SubmitVersionDto, required: true },
-  //   operation: {
-  //     operationId: 'submitWorkbookVersion',
-  //     summary: 'Submit workbook version',
-  //   },
-  // })
-  // submitWorkbookVersion(
-  //   @User('role') role: RoleCode,
-  //   @Body() body: SubmitVersionDto,
-  // ): Promise<SuccessResponseDto> {
-  //   return this.workbookVersionService.submitWorkbookVersion(role, body);
-  // }
+  @Post('submit')
+  @FormDataRequest()
+  @SwaggerApiDocument({
+    response: {
+      status: HttpStatus.OK,
+    },
+    body: { type: SubmitVersionDto, required: true },
+    operation: {
+      operationId: 'submitWorkbookVersion',
+      summary: 'Submit workbook version',
+    },
+  })
+  submitWorkbookVersion(
+    @User('role') role: RoleCode,
+    @Body() body: SubmitVersionDto,
+  ): Promise<SuccessResponseDto> {
+    return this.workbookVersionService.submitWorkbookVersion(role, body);
+  }
 
-  // @RoleBaseAccessControl(RoleCode.IMS, RoleCode.PMA, RoleCode.PMS)
-  // @Post('sub-version/review')
-  // @SwaggerApiDocument({
-  //   response: {
-  //     status: HttpStatus.OK,
-  //   },
-  //   body: { type: ReviewWorkbookSubVersionDto, required: true },
-  //   operation: {
-  //     operationId: 'reviewSubVersion',
-  //     summary: 'Review sub version',
-  //   },
-  // })
-  // reviewSubVersion(
-  //   @User('id') userId: string,
-  //   @User('role') role: RoleCode,
-  //   @Body() body: ReviewWorkbookSubVersionDto,
-  // ): Promise<SuccessResponseDto> {
-  //   return this.workbookVersionService.reviewWorkbookSubVersion(userId, role, body);
-  // }
+  @RoleBaseAccessControl(RoleCode.IMS, RoleCode.PMA, RoleCode.PMS)
+  @Post('sub-version/review')
+  @SwaggerApiDocument({
+    response: {
+      status: HttpStatus.OK,
+    },
+    body: { type: ReviewWorkbookSubVersionDto, required: true },
+    operation: {
+      operationId: 'reviewSubVersion',
+      summary: 'Review sub version',
+    },
+  })
+  reviewSubVersion(
+    @User('id') userId: string,
+    @User('role') role: RoleCode,
+    @Body() body: ReviewWorkbookSubVersionDto,
+  ): Promise<SuccessResponseDto> {
+    return this.workbookVersionService.reviewWorkbookSubVersion(userId, role, body);
+  }
 
   @Get(':workbookId/list')
   @SwaggerApiDocument({

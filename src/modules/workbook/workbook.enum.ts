@@ -22,17 +22,16 @@ export enum WorkbookSubVersionStatus {
 }
 
 export enum WorkbookStage {
-  IMA_UPDATE_INPUTS = 'IMA_UPDATE_INPUTS',
-  IMS_REVIEW = 'IMS_REVIEW',
-  PMA_REVIEW = 'PMA_REVIEW',
-  PMA_UPDATE_FORMULAS = 'PMA_UPDATE_FORMULAS',
-  PMS_REVIEW_FORMULAS = 'PMS_REVIEW_FORMULAS',
-  COMPLETED = 'COMPLETED',
+  ImaUpdateInputs = 'ImaUpdateInputs',
+  ImsReview = 'ImsReview',
+  PmaReviewAndUpdateFormulas = 'PmaReviewAndUpdateFormulas',
+  PmsReviewFormulas = 'PmsReviewFormulas',
+  Completed = 'Completed',
 }
 
 export enum WorkbookSubVersionType {
-  UpdateInputs = 'Update Inputs',
-  UpdateFormulas = 'Update Formulas',
+  UpdateInputs = 'UpdateInputs',
+  UpdateFormulas = 'UpdateFormulas',
 }
 
 export enum WorkbookSubVersionTeam {

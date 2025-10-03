@@ -4,3 +4,4 @@ export * from './request/submit-version.dto';
 export * from './request/review-workbook-sub-version.dto';
 export * from './response/workbook-version-response.dto';
 export * from './response/workbook-sub-version-response.dto';
+export * from './response/create-workbook-sub-version.response.dto';

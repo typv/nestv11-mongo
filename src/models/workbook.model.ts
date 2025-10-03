@@ -48,7 +48,7 @@ export class Workbook extends BaseModel {
     type: String,
     enum: WorkbookStage,
     required: true,
-    default: WorkbookStage.IMA_UPDATE_INPUTS,
+    default: WorkbookStage.ImaUpdateInputs,
   })
   currentStage: WorkbookStage;
 }

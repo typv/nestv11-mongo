@@ -1,5 +1,5 @@
+import { PropertyDto } from '../../../../../decorators';
 import { ImportWorkbookDto } from '../../../dto';
-import { PropertyDto } from 'src/decorators';
 
 export class SubmitVersionDto extends ImportWorkbookDto {
   @PropertyDto({
