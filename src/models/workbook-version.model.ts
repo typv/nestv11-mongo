@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, Types } from 'mongoose';
+import { Types } from 'mongoose';
 import {
   WorkbookPermission,
   WorkbookVersionStatus,
@@ -7,6 +7,7 @@ import {
 import { Role } from './role.model';
 import { User } from './user.model';
 import { Workbook } from './workbook.model';
+import { BaseDocument, BaseModel } from 'src/models/base.model';
 
 @Schema({ _id: false })
 export class Collaborator {
@@ -24,12 +25,10 @@ export class Collaborator {
   grantedAt: Date;
 }
 
-export type WorkbookVersionDocument = HydratedDocument<WorkbookVersion>;
+export type WorkbookVersionDocument = BaseDocument<WorkbookVersion>;
 
 @Schema({ timestamps: true, collection: 'workbook-versions' })
-export class WorkbookVersion {
-  @Prop({ type: Types.ObjectId, default: () => new Types.ObjectId() })
-  _id?: Types.ObjectId;
+export class WorkbookVersion extends BaseModel {
 
   @Prop({ type: String, required: true })
   name: string;

@@ -1,14 +1,11 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, Types } from 'mongoose';
 import { PermissionCode } from 'src/common/enums';
+import { BaseDocument, BaseModel } from 'src/models/base.model';
 
-export type PermissionDocument = HydratedDocument<Permission>;
+export type PermissionDocument = BaseDocument<Permission>;
 
 @Schema({ timestamps: true, collection: 'permissions' })
-export class Permission {
-  @Prop({ type: Types.ObjectId, default: () => new Types.ObjectId() })
-  _id?: Types.ObjectId;
-
+export class Permission extends BaseModel {
   @Prop({ enum: PermissionCode, required: true })
   code: PermissionCode;
 
