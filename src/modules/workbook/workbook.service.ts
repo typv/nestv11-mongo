@@ -9,32 +9,26 @@ import { JsonStreamUtil } from 'src/common/utilities/json-stream.util';
 import { Logger } from 'winston';
 import { FindWorkbookListDto, ImportWorkbookDto, ImportWorkbookResponseDto, WorkbookListResponseDto } from './dto';
 import { ERROR_RESPONSE, fileExtensionConstant } from '../../common/constants';
-import { SuccessResponseDto } from '../../common/dto/success-response.dto';
 import { RoleCode } from '../../common/enums';
 import { ServerException } from '../../exceptions';
-import {
-  Role,
-  RoleDocument,
-  Workbook,
-  WorkbookDocument,
-  WorkbookVersion,
-  WorkbookVersionDocument,
-} from '../../models';
 import { BaseService } from '../base.service';
 import { WorkbookVersionStatus } from 'src/modules/workbook/workbook.enum';
 import { UploadService } from 'src/modules/upload';
 import { FileUtil } from 'src/common/utilities/file.util';
+import { WorkbookRepository } from 'src/repositories/workbook/workbook.repository';
+import { WorkbookVersionRepository } from 'src/repositories/workbook-version/workbook-version.repository';
+import { RoleRepository } from 'src/repositories/role/role.repository';
+import { WorkbookVersion } from 'src/models';
 
 @Injectable()
 export class WorkbookService extends BaseService {
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
-    @InjectModel(Workbook.name) private workbookModel: Model<WorkbookDocument>,
-    @InjectModel(WorkbookVersion.name)
-    private workbookVersionModel: Model<WorkbookVersionDocument>,
     @InjectConnection() private readonly connection: Connection,
-    @InjectModel(Role.name) private roleModel: Model<RoleDocument>,
     private readonly uploadService: UploadService,
+    private readonly workbookRepository: WorkbookRepository,
+    private readonly workbookVersionRepository: WorkbookVersionRepository,
+    private readonly roleRepository: RoleRepository,
   ) {
     super();
     this.logger = this.logger.child({ context: WorkbookService.name });
@@ -61,13 +55,13 @@ export class WorkbookService extends BaseService {
       throw new ServerException(ERROR_RESPONSE.INVALID_OBJECT('json'));
     }
 
-    const existingWorkbook = await this.workbookModel.findOne({
+    const existingWorkbook = await this.workbookRepository.findOne({
       univerWorkbookId: workbookData.id,
     });
     if (existingWorkbook) {
       throw new ServerException(ERROR_RESPONSE.WORKBOOK_ALREADY_EXISTED);
     }
-    const roleDoc = await this.roleModel.findOne({ code: role });
+    const roleDoc = await this.roleRepository.findOne({ code: role });
     if (!roleDoc) {
       throw new ServerException({
         ...ERROR_RESPONSE.RESOURCE_NOT_FOUND,
@@ -86,31 +80,29 @@ export class WorkbookService extends BaseService {
     const session = await this.connection.startSession();
     session.startTransaction();
     try {
-      const workbook = await this.workbookModel.findOneAndUpdate(
-        { univerWorkbookId: univerWorkbookId, owner: new Types.ObjectId(userId) },
-        {
-          $setOnInsert: {
-            univerWorkbookId: univerWorkbookId,
-            name: workbookData.name,
-            owner: new Types.ObjectId(userId),
-          },
-        },
-        { upsert: true, new: true, session },
+      const userIdObj = new Types.ObjectId(userId);
+
+      // Upset workbook
+      const workbook = await this.workbookRepository.findOrCreateByUniverId(
+        univerWorkbookId,
+        userIdObj,
+        workbookData.name,
+        session
       );
+
       // Create workbook version
-      const version = await this.getNextWorkbookVersion(workbook._id, session);
-      await this.workbookVersionModel.create(
-        [
-          {
-            name: workbookData.name,
-            workbook: workbook._id,
-            version,
-            role: roleDoc._id,
-            status: WorkbookVersionStatus.Awaiting,
-            snapshotFileKey: uploadResponse.fileKey,
-          },
-        ],
-        { session },
+      const latestVersion = await this.workbookVersionRepository.getLatestVersion(workbook._id, session);
+      const nextVersion = (latestVersion?.version ?? 0) + 1;
+      await this.workbookVersionRepository.createVersion(
+        {
+          name: workbookData.name,
+          workbook: workbook._id,
+          version: nextVersion,
+          role: roleDoc._id,
+          status: WorkbookVersionStatus.Awaiting,
+          snapshotFileKey: uploadResponse.fileKey,
+        } as unknown as Partial<WorkbookVersion>,
+        session
       );
       await session.commitTransaction();
 
@@ -135,14 +127,6 @@ export class WorkbookService extends BaseService {
   }
 
   /* ----Helper Methods---- */
-  private async getNextWorkbookVersion(workbookId: Types.ObjectId, session?: ClientSession): Promise<number> {
-    const latest = await this.workbookVersionModel
-      .findOne({ workbook: workbookId })
-      .sort({ version: -1 })
-      .session(session);
-    return (latest?.version ?? 0) + 1;
-  }
-
   private validateSheetOrder(sheetOrder: string[] | undefined, sheetIds: string[]) {
     if (!sheetOrder || sheetOrder.length !== sheetIds.length) {
       throw new ServerException({
@@ -157,65 +141,9 @@ export class WorkbookService extends BaseService {
   }
 
   async workbookList(userId: string, query: FindWorkbookListDto): Promise<PaginationResponseDto<WorkbookListResponseDto>> {
-    const { searchKeyword, statuses, from, until, page, pageSize } = query;
-    const pipeline = [];
+    const { page, pageSize } = query;
+    const aggregationBuilder = this.workbookVersionRepository.getWorkbookListAggregationBuilder(query);
 
-    const initialMatch: any = { isCurrentActive: true };
-
-    if (searchKeyword) {
-      initialMatch.name = new RegExp(searchKeyword, 'i');
-    }
-    if (from || until) {
-      const updatedAtCondition: any = {};
-      if (from) updatedAtCondition['$gte'] = new Date(from);
-      if (until) updatedAtCondition['$lte'] = new Date(until);
-      if (Object.keys(updatedAtCondition).length > 0) {
-        initialMatch.updatedAt = updatedAtCondition;
-      }
-    }
-    pipeline.push({ $match: initialMatch });
-
-    pipeline.push({
-      $lookup: {
-        from: 'workbooks',
-        localField: 'workbook',
-        foreignField: '_id',
-        as: 'w'
-      }
-    });
-    pipeline.push({
-      '$unwind': {
-        path: '$w',
-        preserveNullAndEmptyArrays: true
-      }
-    });
-
-    if (statuses?.length) {
-      pipeline.push({
-        $match: {
-          'w.approvedStatus': { $in: statuses }
-        }
-      });
-    }
-
-    pipeline.push({
-      $project: {
-        workbookId: { $toString: '$w._id' },
-        workbookVersionId: { $toString: '$_id' },
-        univerWorkbookId: '$w.univerWorkbookId',
-        originalName: '$w.name',
-        versionName: '$name',
-        version: 1,
-        approvedStatus: '$w.approvedStatus',
-        uploadedTime: '$w.createdAt',
-        createdAt: 1,
-        updatedAt: 1,
-        _id: 0
-      }
-    });
-    pipeline.push({ $sort: { createdAt: -1 } });
-    const aggregationBuilder = this.workbookVersionModel.aggregate(pipeline);
-
-    return await this.aggregatePaginate(aggregationBuilder, page, pageSize);
+    return await this.workbookVersionRepository.aggregatePaginate(aggregationBuilder, page, pageSize);
   }
 }

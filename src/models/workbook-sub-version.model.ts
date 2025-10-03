@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, Types } from 'mongoose';
+import { Types } from 'mongoose';
 import {
   WorkbookSubVersionStatus,
   WorkbookSubVersionTeam,
@@ -7,14 +7,12 @@ import {
 } from 'src/modules/workbook/workbook.enum';
 import { User } from './user.model';
 import { Workbook } from './workbook.model';
+import { BaseDocument, BaseModel } from 'src/models/base.model';
 
-export type WorkbookSubVersionDocument = HydratedDocument<WorkbookSubVersion>;
+export type WorkbookSubVersionDocument = BaseDocument<WorkbookSubVersion>;
 
 @Schema({ timestamps: true, collection: 'workbook-sub-versions' })
-export class WorkbookSubVersion {
-  @Prop({ type: Types.ObjectId, default: () => new Types.ObjectId() })
-  _id?: Types.ObjectId;
-
+export class WorkbookSubVersion extends BaseModel {
   @Prop({ type: String, required: false, default: null })
   name: string;
 
